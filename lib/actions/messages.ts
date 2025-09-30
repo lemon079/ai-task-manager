@@ -5,9 +5,9 @@ import { prisma } from "@/prisma/prisma";
 import { Message } from "@prisma/client";
 
 export async function getMessages(): Promise<Message[]> {
+  const session = await auth();
+  const userId = session?.user.id;
   try {
-    const session = await auth();
-    const userId = session?.user.id;
     const messages = await prisma.message.findMany({
       where: { chatId: `chat-${userId}` },
       orderBy: { createdAt: "asc" },
