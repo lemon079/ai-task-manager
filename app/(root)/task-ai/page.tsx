@@ -14,7 +14,7 @@ export default async function Page() {
   const messages = await getMessages();
 
   return (
-    <div className="flex flex-col justify-center items-center mt-5">
+    <div className="flex flex-col justify-center items-center mt-5 mx-2 sm:mx-auto">
       <Card className="w-full max-w-5xl rounded-2xl shadow-lg border h-[85vh] flex flex-col p-4">
         {/* Header */}
         <CardHeader className="text-center p-2">

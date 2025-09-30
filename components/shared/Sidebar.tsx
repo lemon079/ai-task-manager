@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { LayoutDashboard, Workflow, Zap, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, Workflow, Settings, LogOut, Notebook } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { usePathname } from "next/navigation";
@@ -24,9 +24,9 @@ export default function Sidebar({ onLinkClick }: { onLinkClick?: () => void }) {
       icon: <IconWrapper icon={Workflow} />,
     },
     {
-      label: "Workflows",
-      path: "/workflows",
-      icon: <IconWrapper icon={Zap} />,
+      label: "Journals",
+      path: "/journals",
+      icon: <IconWrapper icon={Notebook} />,
     },
     {
       label: "Settings",
@@ -41,7 +41,7 @@ export default function Sidebar({ onLinkClick }: { onLinkClick?: () => void }) {
 
   return (
     <aside className="w-64 flex bg-blue-100 flex-col border-r border-blue-200 shadow-xl sticky top-0 left-0 h-full">
-      <div className="p-6 text-xl font-bold text-blue-900">AI Task & Workflows</div>
+      <div className="p-6 text-xl font-bold text-blue-900">AI Task & Journals</div>
       <CustomSeparator />
 
       <ScrollArea className="flex-1 p-2">

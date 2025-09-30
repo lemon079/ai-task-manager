@@ -7,7 +7,7 @@ import { ModalProvider } from "../context/ModalContext";
 export const metadata = {
   title: "AI Automation Dashboard",
   description: "Dashboard for managing and automating AI-driven tasks efficiently",
-  keywords: ["AI automation", "workflow", "task management", "productivity", "dashboard"],
+  keywords: ["AI automation", "journals", "task management", "productivity", "dashboard"],
   authors: [{ name: "Bilal Tahir" }],
   openGraph: {
     title: "AI Automation Dashboard",
@@ -26,12 +26,12 @@ export const metadata = {
 export default function RootDashboardLayout({ children }: { children: React.ReactNode }) {
 
   return (
-    <div className="min-h-screen md:flex bg-muted ">
+    <div className="min-h-screen md:flex bg-muted">
       <MobileSidebar />       {/* appear only on small screens */}
       <div className="hidden md:flex"> {/* on small screens, hide the actual sidebar */}
         <Sidebar />
       </div>
-      <main className={cn("flex-1 w-full max-w-6xl mx-auto")}>
+      <main className={cn("flex-1 w-full max-w-6xl mx-auto p-6")}>
         <ModalProvider>
           {children}
         </ModalProvider>

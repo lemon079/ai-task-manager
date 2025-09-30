@@ -1,7 +1,7 @@
 export const metadata = {
   title: "AI Task Automation - Sign In",
   description: "Login or register to access your AI Automation dashboard.",
-  keywords: ["AI Automation", "Workflow AI", "Login", "Sign In"],
+  keywords: ["AI Automation", "journal AI", "Login", "Sign In"],
   robots: {
     index: false,
     follow: false,

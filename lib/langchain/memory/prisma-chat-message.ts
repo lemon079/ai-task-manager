@@ -23,7 +23,7 @@ export class PrismaChatMessageHistory extends BaseChatMessageHistory {
     const rows = await prisma.message.findMany({
       where: { chatId: this.chatId },
       orderBy: { createdAt: "asc" },
-      take: 0,
+      take: 5,
     });
 
     const stored: StoredMessage[] = rows.map((m) => ({

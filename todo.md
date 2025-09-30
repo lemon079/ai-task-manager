@@ -1,6 +1,6 @@
 # AI Task Automation
 
-Your project should let users create, manage, and execute tasks or workflows automatically with the help of AI. Instead of just being a "to-do list," it becomes a smart orchestrator that can handle multi-step actions, integrate APIs, and respond intelligently.
+Your project should let users create, manage, and execute tasks automatically with the help of AI. Instead of just being a "to-do list," it becomes a smart orchestrator that can handle multi-step actions, integrate APIs, and respond intelligently.
 
 ---
 
@@ -23,13 +23,6 @@ Your project should let users create, manage, and execute tasks or workflows aut
 - AI can suggest optimizations:
   - Example: “You have free time tomorrow 3-5 PM, should I move the study session there?”
 
-### Workflow Automation
-
-- Chain multiple tasks together (like Zapier/IFTTT but AI-driven).
-  - Example: When I get an email → extract important info → save to notes → set a reminder.
-- AI can generate these workflows dynamically:
-  - Example: “Whenever I get a GitHub PR assigned, notify me on WhatsApp.”
-
 ### Integration with APIs
 
 - **Email** (read/write).
@@ -50,7 +43,6 @@ Your project should let users create, manage, and execute tasks or workflows aut
 ## Frontend (Next.js + Tailwind + ShadCN/UI)
 
 - **Dashboard** with task list + AI chat panel.
-- Drag-and-drop workflows (optional, for later).
 - **Calendar view** to visualize tasks.
 - **Search and filter tasks.**
 
@@ -58,8 +50,6 @@ Your project should let users create, manage, and execute tasks or workflows aut
 
 - **Auth** (NextAuth).
 - **Task storage** (Postgres or Mongo).
-- API routes to serve tasks, workflows, and AI outputs.
-- Endpoint to trigger AI agent workflows.
 
 ## AI Layer
 
@@ -85,6 +75,5 @@ Your project should let users create, manage, and execute tasks or workflows aut
 ## 🔮 Why It’s Impressive
 
 - Combines **MERN/PERN full-stack** + **AI agents** + **automation**.
-- Real-world relevance (everyone needs task/workflow automation).
 - Extendable (can grow into a SaaS like Zapier/Notion AI competitor).
 - Great for portfolio → shows frontend, backend, AI integration, and automation.

@@ -131,23 +131,17 @@ export function ScheduleCalendar({ tasks }: { tasks: Task[] }) {
                   {Object.entries(grouped).map(([priority, count]) => (
                     <div
                       key={priority}
-                      className="relative flex items-center gap-1 text-xs text-gray-700"
+                      className="relative flex items-center gap-1 text-xs text-gray-700 font-semibold"
                     >
                       {isNew && (
                         <span
                           className={cn(
-                            "absolute inline-flex h-3 w-3 rounded-full opacity-75 animate-ping",
+                            "absolute inline-flex size-3 rounded-full opacity-75 animate-ping",
                             priorityColors[priority]
                           )}
                         />
                       )}
-                      <span
-                        className={cn(
-                          "inline-block h-3 w-3 rounded-full",
-                          priorityColors[priority]
-                        )}
-                      />
-                      {count}
+                      {count > 1 ? `${count} Tasks` : '1 Task'}
                     </div>
                   ))}
                 </div>

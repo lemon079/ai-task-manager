@@ -4,13 +4,6 @@ import { ChatOllama } from "@langchain/ollama";
 const gemini = new ChatGoogleGenerativeAI({
   model: "gemini-2.5-flash",
   apiKey: process.env.GOOGLE_API_KEY,
-  callbacks: [
-    {
-      handleLLMNewToken(token) {
-        process.stdout.write(token); // streams token by token
-      },
-    },
-  ],
 });
 
 const qwen = new ChatOllama({

@@ -17,7 +17,7 @@ export async function getTasks(): Promise<Task[]> {
     });
     return tasks;
   } catch (error) {
-    throw new Error("Failed to fetch tasks");
+    throw new Error(`Failed to fetch tasks, [ERROR]: ${error}`);
   }
 }
 
