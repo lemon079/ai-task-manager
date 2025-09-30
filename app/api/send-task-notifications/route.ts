@@ -1,16 +1,16 @@
 import { sendTaskEmailNotifications } from "@/lib/actions/notification";
-import { NextApiRequest, NextApiResponse } from "next";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(req: NextApiRequest, res: NextApiResponse) {
+export async function GET(req: NextRequest) {
   try {
-    const authHeader = req.headers.authorization;
+    const authHeader = req.headers.get("authorization");
 
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    
+
     await sendTaskEmailNotifications();
+
     return NextResponse.json(
       { message: "Task notifications sent successfully." },
       { status: 200 }
