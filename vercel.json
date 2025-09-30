@@ -1,0 +1,6 @@
+{
+  "crons": [{
+    "path": "/api/send-task-notifications",
+    "schedule": "0 3 * * *"
+  }]
+}
