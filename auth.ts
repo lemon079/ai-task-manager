@@ -69,7 +69,7 @@ export const authConfig = {
     },
   },
 
-  secret: process.env.AUTH_SECRET, // required in production
+  secret: process.env.NEXTAUTH_SECRET, // required in production
   session: { strategy: "jwt" },
 } satisfies NextAuthOptions;
 
