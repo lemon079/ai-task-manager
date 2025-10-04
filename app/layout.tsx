@@ -16,7 +16,6 @@ const inter = Inter({
 export default function RootLayout({ children }: { children: React.ReactNode }) {
 
   // TODO: Fix revalidation after messaging and getting response
-  // TODO: Fix task-ai page SSG due to auth() in getMessage action
   // TODO: create random quote using ai via cron job
   // TODO: make components server side as much as you can
 
