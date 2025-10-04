@@ -32,13 +32,14 @@ enum Status {
 }
 
 model Task {
-  id        String    @id @default(cuid())
-  userId    String
-  title     String
-  priority  Priority  @default(medium) // ✅ Enum instead of String
-  status    Status    @default(pending) // ✅ Enum instead of String
-  dueDate   DateTime? // ✅ New field for deadlines
-  createdAt DateTime  @default(now())
+  id               String    @id @default(cuid())
+  userId           String
+  title            String
+  priority         Priority  @default(medium) // ✅ Enum instead of String
+  status           Status    @default(pending) // ✅ Enum instead of String
+  dueDate          DateTime? // ✅ New field for deadlines
+  createdAt        DateTime  @default(now())
+  deadlineNotified Boolean   @default(false)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

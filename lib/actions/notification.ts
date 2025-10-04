@@ -30,7 +30,9 @@ export async function sendTaskEmailNotifications() {
     if (!tasksByUser[userId]) tasksByUser[userId] = [];
     tasksByUser[userId].push(task);
   }
-  console.log(`Tasks grouped by user: ${Object.keys(tasksByUser).length} users found.`);
+  console.log(
+    `Tasks grouped by user: ${Object.keys(tasksByUser).length} users found.`
+  );
 
   const now = new Date();
 
@@ -69,4 +71,55 @@ export async function sendTaskEmailNotifications() {
     console.log(`Email sent: ${res.response}`);
   }
   console.log("All email notifications processed.");
+}
+
+export async function sendDeadlineNotifications() {
+  const now = new Date();
+
+  // Fetch only tasks with deadlines
+  const tasks = await prisma.task.findMany({
+    where: {
+      dueDate: { not: null },
+      deadlineNotified: false, // 🚀 only fetch tasks not notified yet
+    },
+    include: { user: true },
+  });
+
+  for (const task of tasks) {
+    if (!task.user?.email) continue;
+
+    const diffHours = Math.floor(
+      (new Date(task.dueDate!).getTime() - now.getTime()) / (1000 * 60 * 60)
+    );
+
+    let subject: string | null = null;
+    let message: string | null = null;
+
+    if (diffHours < 0) {
+      subject = `⚠️ Task Overdue: ${task.title}`;
+      message = `Your task "${
+        task.title
+      }" was due on ${task.dueDate?.toDateString()} and is now overdue!`;
+    } else if (diffHours <= 24) {
+      subject = `📌 Task Due Soon: ${task.title}`;
+      message = `Your task "${
+        task.title
+      }" is due within the next 24 hours (${task.dueDate?.toLocaleString()}).`;
+    }
+
+    if (subject && message) {
+      await transporter.sendMail({
+        from: `"Task Manager (no-reply)" <${process.env.EMAIL_USER}>`,
+        to: task.user.email,
+        subject,
+        text: message,
+      });
+
+      // ✅ Mark task as notified so it won’t trigger again
+      await prisma.task.update({
+        where: { id: task.id },
+        data: { deadlineNotified: true },
+      });
+    }
+  }
 }
