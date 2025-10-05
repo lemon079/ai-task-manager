@@ -18,13 +18,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   // TODO: Fix revalidation after messaging and getting response
   // TODO: create random quote using ai via cron job
   // TODO: make components server side as much as you can
+  // TODO: learn langchain memory management.
+  // TODO: create agentic workflow using langchain.
 
   return (
-    // <html lang="en" className={inter.variable}>
     <html lang="en">
       <body
         className={cn("antialiased", inter.className)}
-        // className={cn("antialiased")}
       >
         <NextAuthProvider>
           <QueryProvider>

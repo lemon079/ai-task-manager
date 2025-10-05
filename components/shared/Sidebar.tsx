@@ -23,11 +23,11 @@ export default function Sidebar({ onLinkClick }: { onLinkClick?: () => void }) {
       path: "/task-ai",
       icon: <IconWrapper icon={Workflow} />,
     },
-    {
-      label: "Journals",
-      path: "/journals",
-      icon: <IconWrapper icon={Notebook} />,
-    },
+    // {
+    //   label: "Journals",
+    //   path: "/journals",
+    //   icon: <IconWrapper icon={Notebook} />,
+    // },
     {
       label: "Settings",
       path: "/settings",

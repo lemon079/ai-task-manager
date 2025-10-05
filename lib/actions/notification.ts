@@ -63,7 +63,7 @@ export async function sendTaskEmailNotifications() {
 
     console.log(`Sending email to ${email} with body:\n${body}`);
     const res = await transporter.sendMail({
-      from: `"Task Manager" <${process.env.EMAIL_USER}>`,
+      from: `"Ai-Task-Manager ${process.env.EMAIL_FROM}`,
       to: email,
       subject: "Your Task Notifications",
       text: body,
@@ -109,7 +109,7 @@ export async function sendDeadlineNotifications() {
 
     if (subject && message) {
       await transporter.sendMail({
-        from: `"Task Manager (no-reply)" <${process.env.EMAIL_USER}>`,
+        from: `"Ai-Task-Manager <${process.env.EMAIL_FROM}>`,
         to: task.user.email,
         subject,
         text: message,

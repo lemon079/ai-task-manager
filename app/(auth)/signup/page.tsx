@@ -1,22 +1,12 @@
+import { SignupForm } from '@/components/signup-form'
 import React from 'react'
 
 const page = () => {
   return (
-    <div>
-      <h1>Sign Up</h1>
-      <form>
-        <label>
-          Email:
-          <input type="email" name="email" required />
-        </label>
-        <br />
-        <label>
-          Password:
-          <input type="password" name="password" required />
-        </label>
-        <br />
-        <button type="submit">Sign Up</button>
-      </form>
+     <div className="flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
+      <div className="w-full max-w-sm">
+        <SignupForm />
+      </div>
     </div>
   )
 }
