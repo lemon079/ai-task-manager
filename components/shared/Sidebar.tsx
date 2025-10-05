@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { LayoutDashboard, Workflow, Settings, LogOut, Notebook } from "lucide-react";
+import { LayoutDashboard, Workflow, Settings, LogOut } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { usePathname } from "next/navigation";

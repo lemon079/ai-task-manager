@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import { cn } from "@/lib/utils";
 import QueryProvider from "@/components/QueryProvider";
 import "./globals.css";
+import { Toaster } from "@/components/ui/sonner";
 
 export const metadata = {
   title: "Ai-Task Automation",
@@ -31,6 +32,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {children}
           </QueryProvider>
         </NextAuthProvider>
+        <Toaster />
+
       </body>
     </html>
   );

@@ -8,7 +8,7 @@ export default async function middleware(req: NextRequest) {
 
   // Get JWT token using NextAuth
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-
+  
   // Rule 1: redirect "/" → "/dashboard"
   if (pathname === "/") {
     return NextResponse.redirect(new URL("/dashboard", req.url));

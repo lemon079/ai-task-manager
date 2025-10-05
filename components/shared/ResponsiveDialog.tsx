@@ -16,7 +16,7 @@ import {
     DrawerTitle,
     DrawerDescription,
 } from "@/components/ui/drawer";
-import { useModalContext } from "@/app/hooks/useModalContext";
+import { useModalContext } from "@/hooks/useModalContext";
 
 interface ResponsiveDialogProps {
     title: string;

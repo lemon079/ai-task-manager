@@ -5,10 +5,10 @@ import { Calendar } from "@/components/ui/calendar";
 import { Task } from "@prisma/client";
 import { cn } from "@/lib/utils";
 import { priorityColors } from "@/types/util-types";
-import { useModalContext } from "@/app/hooks/useModalContext";
 import { Button } from "../ui/button";
 import TaskTable from "../tasks/TaskTable";
 import { ResponsiveDialog } from "../shared/ResponsiveDialog";
+import { useModalContext } from "@/hooks/useModalContext";
 
 export function ScheduleCalendar({ tasks }: { tasks: Task[] }) {
   const today = useMemo(() => new Date(), []);

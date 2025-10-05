@@ -10,6 +10,7 @@ import { revalidatePath } from "next/cache";
 export async function getTasks(): Promise<Task[]> {
   const session = await auth();
   const userId = session?.user.id;
+
   try {
     const tasks = await prisma.task.findMany({
       orderBy: { createdAt: "desc" },

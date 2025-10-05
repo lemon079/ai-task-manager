@@ -125,7 +125,7 @@
 
 @layer components {
   .bg-customBlue {
-    @apply bg-blue-400 hover:bg-blue-500;
+    @apply bg-blue-400;
   }
 
   .no-result {

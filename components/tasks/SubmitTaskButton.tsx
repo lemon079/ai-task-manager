@@ -3,10 +3,10 @@
 import { Loader2, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRef } from "react";
-import { useTaskAgent } from "@/app/hooks/useTaskAgent";
 import IconWrapper from "../shared/IconWrapper";
 import { Input } from "../ui/input";
 import { useRouter } from "next/navigation";
+import { useTaskAgent } from "@/hooks/useTaskAgent";
 
 export function SubmitTaskButton() {
     const inputRef = useRef<HTMLInputElement>(null);
