@@ -42,7 +42,6 @@ export default function MobileSidebar() {
           <Sidebar onLinkClick={() => setOpen(false)} />
         </DrawerContent>
       </Drawer>
-      <div>ICON</div>
     </div>
   );
 }

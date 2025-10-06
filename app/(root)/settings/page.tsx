@@ -1,13 +1,16 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useSettings } from "@/hooks/useSettings"; // ← our React Query hook
+import { useSettings } from "@/hooks/useSettings";
 import { toast } from "sonner";
+import CustomLoader from "@/components/shared/CustomLoader";
+import Heading from "@/components/shared/Heading";
+import { Bell } from "lucide-react";
 
 const SettingsPage = () => {
   const { settings, isLoading, saveSettings, isPending } = useSettings();
@@ -15,11 +18,21 @@ const SettingsPage = () => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [notificationTime, setNotificationTime] = useState("09:00");
 
-  // When settings are fetched, sync them to local state
+  // Store initial values for comparison
+  const [initialSettings, setInitialSettings] = useState<{
+    notificationsEnabled: boolean;
+    notificationTime: string;
+  } | null>(null);
+
   useEffect(() => {
     if (settings) {
-      setNotificationsEnabled(settings.notificationsEnabled);
-      setNotificationTime(settings.notificationTime || "09:00");
+      const { notificationsEnabled, notificationTime } = settings;
+      setNotificationsEnabled(notificationsEnabled);
+      setNotificationTime(notificationTime || "09:00");
+      setInitialSettings({
+        notificationsEnabled,
+        notificationTime: notificationTime || "09:00",
+      });
     }
   }, [settings]);
 
@@ -29,6 +42,8 @@ const SettingsPage = () => {
       {
         onSuccess: () => {
           toast.success("Settings saved successfully");
+          // Update initial settings after successful save
+          setInitialSettings({ notificationsEnabled, notificationTime });
         },
         onError: () => {
           toast.error("Failed to save settings");
@@ -37,26 +52,23 @@ const SettingsPage = () => {
     );
   };
 
-  if (isLoading) {
+  // Check if any field has changed
+  const isChanged = useMemo(() => {
+    if (!initialSettings) return false;
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading settings...</p>
-      </div>
+      notificationsEnabled !== initialSettings.notificationsEnabled ||
+      notificationTime !== initialSettings.notificationTime
     );
-  }
+  }, [notificationsEnabled, notificationTime, initialSettings]);
+
+  if (isLoading) return <CustomLoader fullScreen />;
 
   return (
-    <div className="min-h-screen bg-muted/30 px-4 py-6 sm:px-8 lg:px-16">
-      <h1 className="text-3xl font-semibold tracking-tight mb-8">
-        Settings
-      </h1>
-
+    <div className="min-h-screen bg-muted/30 sm:px-8 lg:px-16">
       <div className="grid gap-8 w-full">
         <Card>
           <CardHeader>
-            <CardTitle className="text-xl font-medium">
-              Notifications
-            </CardTitle>
+            <CardTitle className="text-xl font-semibold">Notifications</CardTitle>
           </CardHeader>
 
           <CardContent className="space-y-6">
@@ -64,7 +76,7 @@ const SettingsPage = () => {
             <div className="flex items-center justify-between">
               <Label
                 htmlFor="notifications"
-                className="text-base font-normal text-muted-foreground"
+                className="text-base font-normal"
               >
                 Enable Notifications
               </Label>
@@ -95,11 +107,12 @@ const SettingsPage = () => {
             )}
 
             <Button
+              variant={"customBlue"}
               className="w-full sm:w-auto"
               onClick={handleSave}
-              disabled={isPending}
+              disabled={!isChanged || isPending}
             >
-              {isPending ? "Saving..." : "Save Settings"}
+              {isPending ? <CustomLoader color="text-black"/> : "Save Settings"}
             </Button>
           </CardContent>
         </Card>

@@ -9,6 +9,7 @@ import {
 import { getMessages } from "@/lib/actions/messages";
 import { SubmitTaskButton } from "@/components/tasks/SubmitTaskButton";
 import ChatMessages from "@/components/tasks/ChatMessage";
+import { NotebookPen } from "lucide-react";
 
 export default async function Page() {
   const messages = await getMessages();
@@ -18,6 +19,7 @@ export default async function Page() {
       <Card className="w-full max-w-5xl rounded-2xl shadow-lg border h-[85vh] flex flex-col p-4">
         {/* Header */}
         <CardHeader className="text-center p-2">
+          <NotebookPen className="ml-auto"/>
           <CardTitle className="text-lg sm:text-xl font-bold">
             AI Task Manager
           </CardTitle>
