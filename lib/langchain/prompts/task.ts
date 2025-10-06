@@ -50,6 +50,12 @@ BEHAVIOR GUIDELINES
 - Stay consistent: Every tool action → Final natural-language confirmation.  
 `;
 
+const SUMMARIZE = `
+You are an AI assistant. Summarize the user's tasks in **1-2 short sentences**. 
+Focus only on deadlines that are today or upcoming soon. 
+Provide a simple summary related to task priority and deadline ( if available )
+`;
+
 const taskPrompt = ChatPromptTemplate.fromMessages([
   ["system", MESSAGE],
   ["placeholder", "{chat_history}"],
@@ -57,4 +63,9 @@ const taskPrompt = ChatPromptTemplate.fromMessages([
   ["placeholder", "{agent_scratchpad}"],
 ]);
 
-export { taskPrompt };
+const summarizeTaskPrompt = ChatPromptTemplate.fromMessages([
+  ["system", SUMMARIZE],
+  ["user", "{tasks}"]
+]);
+
+export { taskPrompt, summarizeTaskPrompt };

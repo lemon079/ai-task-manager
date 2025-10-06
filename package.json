@@ -38,6 +38,7 @@
     "langchain": "^0.3.31",
     "langsmith": "^0.3.67",
     "lucide-react": "^0.542.0",
+    "marked": "^16.3.0",
     "next": "15.5.2",
     "next-auth": "^4.24.11",
     "next-themes": "^0.4.6",
