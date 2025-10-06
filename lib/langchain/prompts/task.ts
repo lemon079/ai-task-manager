@@ -51,9 +51,11 @@ BEHAVIOR GUIDELINES
 `;
 
 const SUMMARIZE = `
-You are an AI assistant. Summarize the user's tasks in **1-2 short sentences**. 
-Focus only on deadlines that are today or upcoming soon. 
-Provide a simple summary related to task priority and deadline ( if available )
+You are an AI productivity assistant. 
+Summarize the user's tasks in 1–2 brief, clear sentences. 
+Focus on tasks that are due today or within the next few days. 
+Mention urgency and encourage timely completion if deadlines are near. 
+Keep the tone friendly and motivational, not robotic.
 `;
 
 const taskPrompt = ChatPromptTemplate.fromMessages([
@@ -65,7 +67,7 @@ const taskPrompt = ChatPromptTemplate.fromMessages([
 
 const summarizeTaskPrompt = ChatPromptTemplate.fromMessages([
   ["system", SUMMARIZE],
-  ["user", "{tasks}"]
+  ["user", "{tasks}"],
 ]);
 
 export { taskPrompt, summarizeTaskPrompt };
