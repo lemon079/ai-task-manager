@@ -1,15 +1,16 @@
+import { DateTime } from "luxon";
 import { NextResponse } from "next/server";
 import { getTasks, summarizeTasks } from "@/lib/actions/task";
 import { sendTaskEmailNotifications } from "@/lib/actions/notification";
 import { prisma } from "@/prisma/prisma";
-import { DateTime } from "luxon"; // for timeZone conversions
 
 export async function GET() {
   try {
-    const nowUtc = DateTime.utc(); // current UTC time
+    // 1️⃣ Current UTC time
+    const nowUTC = DateTime.utc();
+    console.log(`[CRON] Running global check at UTC ${nowUTC.toFormat("HH:mm:ss")}`);
 
-    console.log(`[CRON] Running at UTC ${nowUtc.toFormat("HH:mm")}`);
-
+    // 2️⃣ Fetch users with notifications enabled
     const users = await prisma.user.findMany({
       where: {
         notificationsEnabled: true,
@@ -25,25 +26,27 @@ export async function GET() {
     });
 
     if (users.length === 0) {
-      console.log("[CRON] No users found.");
-      return NextResponse.json({ message: "No users found." });
+      console.log("[CRON] No users with notifications enabled.");
+      return NextResponse.json({ message: "No users found." }, { status: 200 });
     }
 
+    // 3️⃣ Loop over users and compare times
     for (const user of users) {
-      const userLocalTime = nowUtc.setZone(user.timeZone!);
-      const currentLocalTime = userLocalTime.toFormat("HH:mm");
+      // Convert UTC → user's local timezone
+      const userTime = nowUTC.setZone(user.timeZone || "");
 
-      if (currentLocalTime !== user.dailyNotificationTime) {
+      // Compare formatted "HH:mm" time with user's notificationTime
+      if (userTime.toFormat("HH:mm") !== user.dailyNotificationTime) {
         console.log(
-          `[CRON] Skipping ${user.email} — local time ${currentLocalTime}, wants ${user.dailyNotificationTime} (${user.timeZone}).`
+          `[CRON] Skipping ${user.email} — local time ${userTime.toFormat("HH:mm")} ≠ ${user.dailyNotificationTime} (${user.timeZone})`
         );
         continue;
       }
 
-      console.log(`[CRON] Sending daily summary to ${user.email}`);
+      console.log(`[CRON] Sending daily task summary to ${user.email} (${user.timeZone})`);
 
-      const tasks = await getTasks(); // ideally fetch tasks by user.id
-
+      // Get tasks and send notifications
+      const tasks = await getTasks();
       if (!tasks || tasks.length === 0) {
         console.log(`[CRON] No tasks for ${user.email}`);
         continue;
@@ -51,13 +54,12 @@ export async function GET() {
 
       const summary = await summarizeTasks(tasks);
       await sendTaskEmailNotifications(tasks, summary as string);
-
       console.log(`[CRON] Notification sent to ${user.email}`);
     }
 
-    return NextResponse.json({ message: "Cron executed successfully." });
+    return NextResponse.json({ message: "Global cron executed successfully." }, { status: 200 });
   } catch (error) {
     console.error("[CRON ERROR]", error);
-    return NextResponse.json({ message: "Cron failed." }, { status: 500 });
+    return NextResponse.json({ message: "Cron execution failed." }, { status: 500 });
   }
 }
