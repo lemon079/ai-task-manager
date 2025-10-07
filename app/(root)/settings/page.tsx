@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
@@ -9,41 +9,53 @@ import { Button } from "@/components/ui/button";
 import { useSettings } from "@/hooks/useSettings";
 import { toast } from "sonner";
 import CustomLoader from "@/components/shared/CustomLoader";
-import Heading from "@/components/shared/Heading";
-import { Bell } from "lucide-react";
 
-const SettingsPage = () => {
+const Page = () => {
   const { settings, isLoading, saveSettings, isPending } = useSettings();
 
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [notificationTime, setNotificationTime] = useState("09:00");
+  const [notificationTime, setNotificationTime] = useState("08:00");
+  const [timeZone, setTimeZone] = useState("");
 
   // Store initial values for comparison
   const [initialSettings, setInitialSettings] = useState<{
     notificationsEnabled: boolean;
     notificationTime: string;
+    timeZone: string;
   } | null>(null);
+
+
+  useEffect(() => {
+    const detectedZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    setTimeZone(detectedZone);
+  }, []);
+
 
   useEffect(() => {
     if (settings) {
-      const { notificationsEnabled, notificationTime } = settings;
+      const { notificationsEnabled, notificationTime, timeZone } = settings;
+      const detectedZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
       setNotificationsEnabled(notificationsEnabled);
       setNotificationTime(notificationTime || "09:00");
+      setTimeZone(timeZone || detectedZone);
+
       setInitialSettings({
         notificationsEnabled,
         notificationTime: notificationTime || "09:00",
+        timeZone: timeZone || detectedZone,
       });
     }
   }, [settings]);
 
+
   const handleSave = () => {
     saveSettings(
-      { notificationsEnabled, notificationTime },
+      { notificationsEnabled, notificationTime, timeZone },
       {
         onSuccess: () => {
           toast.success("Settings saved successfully");
-          // Update initial settings after successful save
-          setInitialSettings({ notificationsEnabled, notificationTime });
+          setInitialSettings({ notificationsEnabled, notificationTime, timeZone });
         },
         onError: () => {
           toast.error("Failed to save settings");
@@ -52,14 +64,17 @@ const SettingsPage = () => {
     );
   };
 
-  // Check if any field has changed
+
+
   const isChanged = useMemo(() => {
     if (!initialSettings) return false;
     return (
       notificationsEnabled !== initialSettings.notificationsEnabled ||
-      notificationTime !== initialSettings.notificationTime
+      notificationTime !== initialSettings.notificationTime ||
+      timeZone !== initialSettings.timeZone
     );
-  }, [notificationsEnabled, notificationTime, initialSettings]);
+  }, [notificationsEnabled, notificationTime, timeZone, initialSettings]);
+
 
   if (isLoading) return <CustomLoader fullScreen />;
 
@@ -69,6 +84,9 @@ const SettingsPage = () => {
         <Card>
           <CardHeader>
             <CardTitle className="text-xl font-semibold">Notifications</CardTitle>
+            <CardDescription className="text-xs">
+              Timezone: {timeZone}
+            </CardDescription>
           </CardHeader>
 
           <CardContent className="space-y-6">
@@ -112,7 +130,7 @@ const SettingsPage = () => {
               onClick={handleSave}
               disabled={!isChanged || isPending}
             >
-              {isPending ? <CustomLoader color="text-black"/> : "Save Settings"}
+              {isPending ? <CustomLoader color="text-black" /> : "Save Settings"}
             </Button>
           </CardContent>
         </Card>
@@ -121,4 +139,4 @@ const SettingsPage = () => {
   );
 };
 
-export default SettingsPage;
+export default Page;

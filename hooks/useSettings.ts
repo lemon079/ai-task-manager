@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 interface Settings {
   notificationsEnabled: boolean;
   notificationTime: string;
+  timeZone: string;
 }
 
 // Fetch user settings
