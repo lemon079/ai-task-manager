@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useSettings } from "@/hooks/useSettings";
 import { toast } from "sonner";
 import CustomLoader from "@/components/shared/CustomLoader";
+import { DateTime } from "luxon";
 
 const Page = () => {
   const { settings, isLoading, saveSettings, isPending } = useSettings();
@@ -24,17 +25,16 @@ const Page = () => {
     timeZone: string;
   } | null>(null);
 
-
+  // Detect timezone using Luxon
   useEffect(() => {
-    const detectedZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const detectedZone = DateTime.local().zoneName; // e.g. "Asia/Karachi"
     setTimeZone(detectedZone);
   }, []);
-
 
   useEffect(() => {
     if (settings) {
       const { notificationsEnabled, notificationTime, timeZone } = settings;
-      const detectedZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const detectedZone = DateTime.local().zoneName;
 
       setNotificationsEnabled(notificationsEnabled);
       setNotificationTime(notificationTime || "09:00");
@@ -47,7 +47,6 @@ const Page = () => {
       });
     }
   }, [settings]);
-
 
   const handleSave = () => {
     saveSettings(
@@ -64,8 +63,6 @@ const Page = () => {
     );
   };
 
-
-
   const isChanged = useMemo(() => {
     if (!initialSettings) return false;
     return (
@@ -74,7 +71,6 @@ const Page = () => {
       timeZone !== initialSettings.timeZone
     );
   }, [notificationsEnabled, notificationTime, timeZone, initialSettings]);
-
 
   if (isLoading) return <CustomLoader fullScreen />;
 
@@ -92,10 +88,7 @@ const Page = () => {
           <CardContent className="space-y-6">
             {/* Toggle Notifications */}
             <div className="flex items-center justify-between">
-              <Label
-                htmlFor="notifications"
-                className="text-base font-normal"
-              >
+              <Label htmlFor="notifications" className="text-base font-normal">
                 Enable Notifications
               </Label>
               <Switch
@@ -108,10 +101,7 @@ const Page = () => {
             {/* Notification Time */}
             {notificationsEnabled && (
               <div className="flex justify-between">
-                <Label
-                  htmlFor="notification-time"
-                  className="text-sm font-medium text-muted-foreground"
-                >
+                <Label htmlFor="notification-time" className="text-sm font-medium text-muted-foreground">
                   Notify Me Everyday At
                 </Label>
                 <Input
@@ -130,7 +120,7 @@ const Page = () => {
               onClick={handleSave}
               disabled={!isChanged || isPending}
             >
-              {isPending ? <CustomLoader color="text-white"/> : "Save Settings"}
+              {isPending ? <CustomLoader color="text-white" /> : "Save Settings"}
             </Button>
           </CardContent>
         </Card>
