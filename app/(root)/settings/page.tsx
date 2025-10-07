@@ -130,7 +130,7 @@ const Page = () => {
               onClick={handleSave}
               disabled={!isChanged || isPending}
             >
-              {isPending ? <CustomLoader color="text-black" /> : "Save Settings"}
+              {isPending ? <CustomLoader color="text-white"/> : "Save Settings"}
             </Button>
           </CardContent>
         </Card>

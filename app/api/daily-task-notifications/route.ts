@@ -5,24 +5,21 @@ import { prisma } from "@/prisma/prisma";
 
 export async function GET() {
   try {
-    const nowUTC = new Date();
+    const now = new Date();
+    const currentTime = now.toTimeString().slice(0, 5); // → "HH:MM"
 
-    console.log(
-      `[CRON] Running global check at UTC ${nowUTC.toISOString().slice(11, 16)}`
-    );
+    console.log(`[CRON] Running at ${currentTime}`);
 
     // Step 1: Fetch users who have notifications enabled
     const users = await prisma.user.findMany({
       where: {
         notificationsEnabled: true,
         dailyNotificationTime: { not: null },
-        timeZone: { not: null },
       },
       select: {
         id: true,
         email: true,
         dailyNotificationTime: true,
-        timeZone: true,
       },
     });
 
@@ -31,25 +28,16 @@ export async function GET() {
       return NextResponse.json({ message: "No users found." }, { status: 200 });
     }
 
-    // Step 2: For each user, convert current UTC → user's local time
+    // Step 2: For each user, check their notification time
     for (const user of users) {
-      const userLocalTime = new Intl.DateTimeFormat("en-GB", {
-        timeZone: user.timeZone || "",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      }).format(nowUTC); // e.g. "07:30"
-
-      if (userLocalTime !== user.dailyNotificationTime) {
+      if (user.dailyNotificationTime !== currentTime) {
         console.log(
-          `[CRON] Skipping ${user.email} — current local time ${userLocalTime} ≠ ${user.dailyNotificationTime} (${user.timeZone})`
+          `[CRON] Skipping ${user.email} — not their notification time.`
         );
         continue;
       }
 
-      console.log(
-        `[CRON] Sending daily task summary to ${user.email} (${user.timeZone})`
-      );
+      console.log(`[CRON] Sending daily task summary to ${user.email}`);
 
       // Step 3: Get the user’s tasks
       const tasks = await getTasks();
@@ -67,7 +55,7 @@ export async function GET() {
     }
 
     return NextResponse.json(
-      { message: "Global cron executed successfully." },
+      { message: "Cron executed successfully." },
       { status: 200 }
     );
   } catch (error) {
