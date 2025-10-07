@@ -3,8 +3,15 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { Task } from "@prisma/client";
-import { ArrowUpDown } from "lucide-react";
+import { ArrowUpDown, MoreHorizontal } from "lucide-react";
 import { priorityColors } from "@/types/util-types";
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export const columns: ColumnDef<Task>[] = [
   {
@@ -74,5 +81,34 @@ export const columns: ColumnDef<Task>[] = [
         </span>
       );
     },
+  },
+  {
+    id: "actions",
+    cell: ({ row }) => (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="h-8 w-8 p-0">
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem
+            onClick={() => {
+              console.log("Edit", row.original);
+            }}
+          >
+            Edit
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => {
+              console.log("Delete", row.original);
+            }}
+          >
+            Delete
+          </DropdownMenuItem>
+          {/* Add more actions if needed */}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    ),
   },
 ];

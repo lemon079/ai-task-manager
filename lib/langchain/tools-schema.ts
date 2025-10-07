@@ -31,6 +31,10 @@ const fetchTasksSchema = z.object({
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/)
     .optional(), // YYYY-MM-DD
+  dueDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(), // YYYY-MM-DD
   status: z.nativeEnum(Status).optional(),
   priority: z.nativeEnum(Priority).optional(),
   title: z.string().optional(),

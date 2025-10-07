@@ -47,6 +47,7 @@ const fetchTasksTool = tool(
   async ({
     userId,
     createdDate,
+    dueDate,
     status,
     priority,
     title,
@@ -68,11 +69,18 @@ const fetchTasksTool = tool(
       where.title = { contains: title, mode: "insensitive" };
     }
 
-    // Filter by created date (only date part, ignore time)
+    // Filter by created date (only date part)
     if (createdDate) {
       const from = new Date(`${createdDate}T00:00:00.000Z`);
       const to = new Date(`${createdDate}T23:59:59.999Z`);
       where.createdAt = { gte: from, lte: to };
+    }
+
+    // ✅ Filter by due date (only date part)
+    if (dueDate) {
+      const from = new Date(`${dueDate}T00:00:00.000Z`);
+      const to = new Date(`${dueDate}T23:59:59.999Z`);
+      where.dueDate = { gte: from, lte: to };
     }
 
     // Fetch tasks
@@ -88,7 +96,7 @@ const fetchTasksTool = tool(
     return tasks
       .map(
         (t) =>
-          `• ${t.title} | ${t.status} |  ${t.priority} | Due: ${
+          `• ${t.title} | ${t.status} | ${t.priority} | Created: ${t.createdAt.toDateString()} | Due: ${
             t.dueDate ? t.dueDate.toDateString() : "No due date"
           }`
       )
@@ -97,10 +105,11 @@ const fetchTasksTool = tool(
   {
     name: "fetch-tasks",
     description:
-      "Fetch tasks for a user. Supports filtering by createdDate (YYYY-MM-DD), status, priority, title, or any combination. If no filter is provided, fetches all tasks.",
+      "Fetch tasks for a user. Supports filtering by createdDate, dueDate, status, priority, title, or any combination. Dates should be in YYYY-MM-DD format.",
     schema: fetchTasksSchema,
   }
 );
+
 
 // Update Task (✅ Fixed with ID support & disambiguation)
 const updateTaskTool = tool(

@@ -19,9 +19,8 @@ export class PrismaChatMessageHistory extends BaseChatMessageHistory {
 
   // Load messages from DB
   async getMessages() {
-
     const rows = await prisma.message.findMany({
-      where: { chatId: this.chatId },
+      where: { chatId: this.chatId, role: "assistant"},
       orderBy: { createdAt: "asc" },
       take: 5,
     });
@@ -42,9 +41,8 @@ export class PrismaChatMessageHistory extends BaseChatMessageHistory {
 
   // Save any BaseMessage
   async addMessage(message: BaseMessage) {
-
     // Convert to string and remove entire <think>...</think> block
-    const content = (message.content as string)
+    const content = message.content as string;
 
     const role = message._getType() === "human" ? "user" : "assistant";
 
@@ -55,7 +53,6 @@ export class PrismaChatMessageHistory extends BaseChatMessageHistory {
         content,
       },
     });
-
   }
 
   // Save a user message directly
