@@ -1,5 +1,6 @@
 import { ScheduleCalendar } from "@/components/calender/Calendar";
 import Heading from "@/components/shared/Heading";
+import TaskTable from "@/components/tasks/TaskTable";
 import { getTasks } from "@/lib/actions/task";
 
 export default async function DashboardPage() {
@@ -23,9 +24,11 @@ export default async function DashboardPage() {
         {/* Left side (Chart) */}
         <section className="flex-1">
           <Heading
-            title="Charts"
-            subtitle="Keep track of your progress!"
+            title="Tasks"
+            subtitle="All of your tasks"
           />
+          <TaskTable tasks={tasks}/>
+
         </section>
       </div>
     </div>

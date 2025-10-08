@@ -3,15 +3,20 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { Task } from "@prisma/client";
-import { ArrowUpDown, MoreHorizontal } from "lucide-react";
-import { priorityColors } from "@/types/util-types";
-
+import { ArrowUpDown, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
+const priorityColors: Record<string, string> = {
+  HIGH: "bg-red-500",
+  MEDIUM: "bg-yellow-500",
+  LOW: "bg-green-500",
+}
+
 
 export const columns: ColumnDef<Task>[] = [
   {
@@ -67,8 +72,8 @@ export const columns: ColumnDef<Task>[] = [
         st === "completed"
           ? "bg-green-100 text-green-600"
           : st === "in_progress"
-          ? "bg-blue-100 text-blue-600"
-          : "bg-gray-100 text-gray-600";
+            ? "bg-blue-100 text-blue-600"
+            : "bg-gray-100 text-gray-600";
 
       return (
         <span
@@ -87,8 +92,8 @@ export const columns: ColumnDef<Task>[] = [
     cell: ({ row }) => (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-8 w-8 p-0">
-            <MoreHorizontal className="h-4 w-4" />
+          <Button variant="ghost" className="size-8 p-0">
+            <MoreHorizontal className="size-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
@@ -97,14 +102,14 @@ export const columns: ColumnDef<Task>[] = [
               console.log("Edit", row.original);
             }}
           >
-            Edit
+            <Pencil />{" "}Edit
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => {
               console.log("Delete", row.original);
             }}
           >
-            Delete
+            <Trash2 />{" "}Delete
           </DropdownMenuItem>
           {/* Add more actions if needed */}
         </DropdownMenuContent>

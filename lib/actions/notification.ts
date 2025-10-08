@@ -1,7 +1,10 @@
-import { TaskWithUser } from "@/types/util-types";
-import { Task } from "@prisma/client";
+import { Task, User } from "@prisma/client";
 import nodemailer from "nodemailer";
 import { marked } from "marked";
+
+type TaskWithUser = Task & {
+  user: User;
+};
 
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST,
