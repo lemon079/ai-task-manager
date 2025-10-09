@@ -27,7 +27,8 @@ export async function POST(req: Request) {
     }
 
     // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const SALT_ROUNDS = process.env.NODE_ENV === "production" ? 10 : 4;
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
     // Create user
     await prisma.user.create({

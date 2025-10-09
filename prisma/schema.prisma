@@ -75,6 +75,8 @@ model Task {
   deadlineNotified Boolean   @default(false)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model Message {

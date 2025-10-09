@@ -19,15 +19,10 @@ export default function Sidebar({ onLinkClick }: { onLinkClick?: () => void }) {
       icon: <IconWrapper icon={LayoutDashboard} />,
     },
     {
-      label: "Tasks",
+      label: "Task AI",
       path: "/task-ai",
       icon: <IconWrapper icon={Workflow} />,
     },
-    // {
-    //   label: "Journals",
-    //   path: "/journals",
-    //   icon: <IconWrapper icon={Notebook} />,
-    // },
     {
       label: "Settings",
       path: "/settings",

@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🧠 AI Task Manager
 
-## Getting Started
+The **AI Task Manager** is an intelligent task management application that allows users to create, manage, and analyze tasks using **natural language**. It combines the power of **LangChain**, **Next.js**, and **AI agents** to provide an automated productivity experience.  
 
-First, run the development server:
+Users can communicate with a **custom-built AI Task Manager Agent** that performs CRUD operations on tasks through natural language commands. The system also offers a modern dashboard, smart notifications, and AI-driven insights.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🚀 Features
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 🗣️ AI-Powered Task Management
+- Create, update, delete, or retrieve tasks using **natural language**.
+- Powered by a **LangChain-based custom AI agent**.
+- Automatically interprets intent and manages your task database.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 📅 Smart Dashboard
+- **Calendar View** to visualize tasks by date.
+  - Displays visual pings to indicate upcoming deadlines.
+  - Clicking a date reveals all tasks due that day.
+- **Task Table** to list all tasks chronologically.
+  - Includes **pagination (10 tasks per page)**.
+  - Displays key details: title, status, priority, and due date.
 
-## Learn More
+### ⚙️ User Settings
+- Manage personal preferences:
+  - Time zone configuration.
+  - Toggle **email notifications**.
+  - Define **daily reminder time**.
+- Receives **automated email notifications** containing:
+  - AI-generated task summaries and insights.
+  - Upcoming task reminders.
 
-To learn more about Next.js, take a look at the following resources:
+### 📬 Email & Insights
+- Scheduled daily summaries sent via **Nodemailer**.
+- AI-generated productivity insights using **LangChain** models.
+- Provides actionable intelligence to improve planning and task execution.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🏗️ Tech Stack
 
-## Deploy on Vercel
+| Layer | Technology |
+|-------|-------------|
+| **Frontend** | [Next.js 15 (Turbopack)](https://nextjs.org/), [React 19](https://react.dev/), [Tailwind CSS 4](https://tailwindcss.com/) |
+| **Backend** | [Next.js API Routes](https://nextjs.org/docs/api-routes), [Prisma ORM](https://www.prisma.io/), [PostgreSQL] |
+| **AI & Automation** | [LangChain](https://js.langchain.com/), [LangGraph](https://www.langchain.com/langgraph), [Google GenAI API], [Ollama] |
+| **UI Components** | [Radix UI](https://www.radix-ui.com/), [Lucide Icons](https://lucide.dev/), [shadcn/ui] |
+| **Form Handling** | [React Hook Form](https://react-hook-form.com/), [Zod](https://zod.dev/) |
+| **Notifications** | [Nodemailer](https://nodemailer.com/), [Sonner](https://sonner.emilkowal.ski/) |
+| **State Management** | [TanStack Query](https://tanstack.com/query) |
+| **Auth** | [NextAuth.js](https://next-auth.js.org/) with Prisma Adapter |
+| **Utilities** | [date-fns](https://date-fns.org/), [Luxon](https://moment.github.io/luxon/), [Axios](https://axios-http.com/) |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🧩 Folder Structure
+

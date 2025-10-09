@@ -6,13 +6,11 @@ import {
   CardContent,
   CardFooter,
 } from "@/components/ui/card";
-import { getMessages } from "@/lib/actions/messages";
-import { SubmitTaskButton } from "@/components/tasks/SubmitTaskButton";
 import ChatMessages from "@/components/tasks/ChatMessage";
 import { NotebookPen } from "lucide-react";
+import { SubmitMessageButton } from "@/components/tasks/SubmitMessageButton";
 
 export default async function Page() {
-  const messages = await getMessages();
 
   return (
     <div className="flex flex-col justify-center items-center mt-5 mx-2 sm:mx-auto">
@@ -32,11 +30,11 @@ export default async function Page() {
         <CardContent
           className="flex-1 p-0 overflow-hidden border-y-2 border-accent bg-background "
         >
-          <ChatMessages messages={messages} />
+          <ChatMessages />
         </CardContent>
         {/* Input Bar */}
         <CardFooter className="p-0">
-          <SubmitTaskButton />
+          <SubmitMessageButton />
         </CardFooter>
       </Card>
     </div>

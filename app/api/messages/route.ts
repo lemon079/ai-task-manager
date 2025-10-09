@@ -8,10 +8,9 @@ export async function GET() {
     const userId = session?.user.id;
 
     const messages = await prisma.message.findMany({
-      where: { chatId: userId },
+      where: { chatId: `chat-${userId}` },
       orderBy: { createdAt: "asc" },
     });
-
     return NextResponse.json(messages);
   } catch (error) {
     console.error("Error fetching messages:", error);

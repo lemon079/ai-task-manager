@@ -1,15 +1,17 @@
 import { Message } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
 
 export function useGetMessages() {
   return useQuery<Message[], Error>({
     queryKey: ["messages"],
     queryFn: async () => {
-      const res = await fetch("/api/messages");
-      if (!res.ok) {
-        throw new Error("Failed to fetch messages");
+      try {
+        const { data } = await axios.get("/api/messages");
+        return data;
+      } catch (error: any) {
+        throw new Error(error?.response?.data?.message || "Failed to fetch messages");
       }
-      return res.json();
     },
     retry: 1,
   });
