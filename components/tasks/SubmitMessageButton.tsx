@@ -14,7 +14,9 @@ export function SubmitMessageButton() {
     const content = inputRef.current?.value;
     if (!content) return;
 
-    inputRef.current.value = "";
+    if (inputRef.current) {
+      inputRef.current.value = "";
+    }
     sendMessage({ content }); // call the mutation
   };
 
