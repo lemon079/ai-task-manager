@@ -50,8 +50,3 @@ Users can communicate with a **custom-built AI Task Manager Agent** that perform
 | **State Management** | [TanStack Query](https://tanstack.com/query) |
 | **Auth** | [NextAuth.js](https://next-auth.js.org/) with Prisma Adapter |
 | **Utilities** | [date-fns](https://date-fns.org/), [Luxon](https://moment.github.io/luxon/), [Axios](https://axios-http.com/) |
-
----
-
-## 🧩 Folder Structure
-

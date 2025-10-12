@@ -20,12 +20,7 @@ export async function getMessages(): Promise<Message[]> {
   }
 }
 
-
-interface PostMessageInput {
-  content: string;
-}
-
-export async function postMessage({ content }: PostMessageInput): Promise<Message> {
+export async function postMessage({ content }: {content: string}): Promise<Message> {
   const session = await auth();
   const userId = session?.user.id;
 

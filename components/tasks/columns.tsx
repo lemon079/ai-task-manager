@@ -3,26 +3,29 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { Task } from "@prisma/client";
-import { ArrowUpDown, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { ArrowUpDown, MoreHorizontal, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { format, isBefore, isToday } from "date-fns";
+import { deleteTask } from "@/lib/actions/task";
 
 const priorityColors: Record<string, string> = {
-  HIGH: "bg-red-500",
-  MEDIUM: "bg-yellow-500",
-  LOW: "bg-green-500",
-}
-
+  HIGH: "bg-red-300",
+  MEDIUM: "bg-yellow-300",
+  LOW: "bg-green-300",
+};
 
 export const columns: ColumnDef<Task>[] = [
+  // 🆔 Task ID Column
   {
     accessorKey: "title",
     header: "Title",
   },
+
   {
     accessorKey: "priority",
     header: ({ column }) => (
@@ -36,7 +39,6 @@ export const columns: ColumnDef<Task>[] = [
     ),
     cell: ({ row, table }) => {
       const pr = (row.getValue("priority") as string).toUpperCase();
-
       const colorClass =
         pr in priorityColors
           ? `${priorityColors[pr]} bg-opacity-20 text-opacity-90`
@@ -54,6 +56,7 @@ export const columns: ColumnDef<Task>[] = [
       );
     },
   },
+
   {
     accessorKey: "status",
     header: ({ column }) => (
@@ -67,7 +70,6 @@ export const columns: ColumnDef<Task>[] = [
     ),
     cell: ({ row, table }) => {
       const st = row.getValue("status") as string;
-
       const colorClass =
         st === "completed"
           ? "bg-green-100 text-green-600"
@@ -87,6 +89,45 @@ export const columns: ColumnDef<Task>[] = [
       );
     },
   },
+
+  // 📅 Due Date Column
+  {
+    accessorKey: "dueDate",
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        className="cursor-pointer"
+      >
+        Due Date <ArrowUpDown className="ml-1 size-4" />
+      </Button>
+    ),
+    cell: ({ row }) => {
+      const dueDateValue = row.getValue("dueDate") as string;
+      if (!dueDateValue) return <span className="text-gray-400">—</span>;
+
+      const dueDate = new Date(dueDateValue);
+      const formatted = format(dueDate, "MMM dd, yyyy");
+      const now = new Date();
+
+      let colorClass = "text-gray-600";
+      if (isBefore(dueDate, now) && !isToday(dueDate)) {
+        colorClass = "text-red-500 font-medium"; // overdue
+      } else if (isToday(dueDate)) {
+        colorClass = "text-yellow-600 font-medium"; // due today
+      } else {
+        colorClass = "text-green-600"; // upcoming
+      }
+
+      return (
+        <div className={`flex items-center gap-1 text-sm ${colorClass}`}>
+          {formatted}
+        </div>
+      );
+    },
+  },
+
+  // ⚙️ Actions Column
   {
     id: "actions",
     cell: ({ row }) => (
@@ -99,19 +140,11 @@ export const columns: ColumnDef<Task>[] = [
         <DropdownMenuContent align="end">
           <DropdownMenuItem
             onClick={() => {
-              console.log("Edit", row.original);
+              deleteTask(row.original);
             }}
           >
-            <Pencil />{" "}Edit
+            <Trash2 className="mr-2 size-4" /> Delete
           </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => {
-              console.log("Delete", row.original);
-            }}
-          >
-            <Trash2 />{" "}Delete
-          </DropdownMenuItem>
-          {/* Add more actions if needed */}
         </DropdownMenuContent>
       </DropdownMenu>
     ),

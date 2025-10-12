@@ -62,6 +62,7 @@ enum Status {
   pending
   in_progress
   completed
+  over_due
 }
 
 model Task {

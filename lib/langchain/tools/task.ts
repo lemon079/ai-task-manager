@@ -1,6 +1,13 @@
+// src/lib/langchain/tools/taskTools.ts
 import { tool } from "@langchain/core/tools";
-import { z } from "zod";
-import { prisma } from "@/prisma/prisma";
+import {
+  createTask,
+  fetchTasks,
+  updateTask,
+  searchTask,
+  deleteTaskCoreTool,
+} from "@/lib/actions/task";
+import type { Task } from "@prisma/client";
 import {
   createTaskSchema,
   deleteTaskSchema,
@@ -8,32 +15,32 @@ import {
   searchTaskSchema,
   updateTaskSchema,
 } from "@/lib/langchain/tools-schema";
+import { DateTime } from "luxon";
 
-// Create Task
+/* ---------------------------
+   Formatting helpers (for agent-friendly text)
+   --------------------------- */
+
+function formatDate(d: Date | null | undefined) {
+  if (!d) return "No due date";
+  try {
+    return d.toDateString();
+  } catch {
+    return String(d);
+  }
+}
+
+function formatTaskSummary(t: Task) {
+  return `${t.title} | ${t.status} | ${
+    t.priority
+  } | Created: ${t.createdAt.toDateString()} | Due: ${formatDate(t.dueDate)}`;
+}
+
+/** Create Task tool - formats created task for agent */
 const createTaskTool = tool(
-  async ({
-    title,
-    userId,
-    priority,
-    dueDate,
-  }: z.infer<typeof createTaskSchema>) => {
-    const parsedDate = dueDate ? new Date(dueDate) : null;
-
-    const task = await prisma.task.create({
-      data: {
-        title,
-        userId,
-        priority: priority || "medium",
-        dueDate: parsedDate,
-        status: "pending",
-      },
-    });
-
-    return `Task created: ${task.title} with Priority: ${task.priority
-    } and Status: ${task.status} by Due: ${
-      task.dueDate ? task.dueDate.toDateString() : "No due date"
-    }`;
-    
+  async (args: Parameters<typeof createTask>[0]) => {
+    const task = await createTask(args);
+    return `Task created: ${formatTaskSummary(task)}`;
   },
   {
     name: "create-task",
@@ -42,65 +49,16 @@ const createTaskTool = tool(
   }
 );
 
-// List Tasks by CreatedAt
+/** Fetch Tasks tool */
 const fetchTasksTool = tool(
-  async ({
-    userId,
-    createdDate,
-    dueDate,
-    status,
-    priority,
-    title,
-  }: z.infer<typeof fetchTasksSchema>) => {
-    const where: any = { userId };
+  async (args: Parameters<typeof fetchTasks>[0]) => {
+    const tasks = await fetchTasks(args);
 
-    // Filter by status
-    if (status) {
-      where.status = status;
-    }
-
-    // Filter by priority
-    if (priority) {
-      where.priority = priority;
-    }
-
-    // Filter by title (case-insensitive partial match)
-    if (title) {
-      where.title = { contains: title, mode: "insensitive" };
-    }
-
-    // Filter by created date (only date part)
-    if (createdDate) {
-      const from = new Date(`${createdDate}T00:00:00.000Z`);
-      const to = new Date(`${createdDate}T23:59:59.999Z`);
-      where.createdAt = { gte: from, lte: to };
-    }
-
-    // ✅ Filter by due date (only date part)
-    if (dueDate) {
-      const from = new Date(`${dueDate}T00:00:00.000Z`);
-      const to = new Date(`${dueDate}T23:59:59.999Z`);
-      where.dueDate = { gte: from, lte: to };
-    }
-
-    // Fetch tasks
-    const tasks = await prisma.task.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-    });
-
-    if (tasks.length === 0) {
+    if (!tasks || tasks.length === 0) {
       return `No tasks found for the given filters.`;
     }
 
-    return tasks
-      .map(
-        (t) =>
-          `• ${t.title} | ${t.status} | ${t.priority} | Created: ${t.createdAt.toDateString()} | Due: ${
-            t.dueDate ? t.dueDate.toDateString() : "No due date"
-          }`
-      )
-      .join("\n");
+    return tasks.map((t) => `• ${formatTaskSummary(t)}`).join("\n");
   },
   {
     name: "fetch-tasks",
@@ -110,80 +68,32 @@ const fetchTasksTool = tool(
   }
 );
 
-
-// Update Task (✅ Fixed with ID support & disambiguation)
+/** Update Task tool */
 const updateTaskTool = tool(
-  async ({
-    id,
-    title,
-    priority,
-    status,
-    dueDate,
-    userId,
-  }: z.infer<typeof updateTaskSchema>) => {
-    let task;
-
-    if (id) {
-      // ✅ Update by ID
-      task = await prisma.task.update({
-        where: { id },
-        data: {
-          ...(priority && { priority }),
-          ...(status && { status }),
-          ...(dueDate && { dueDate: new Date(dueDate) }),
-        },
-      });
-    } else if (title) {
-      // ✅ Try direct update by title
-      const matches = await prisma.task.findMany({
-        where: {
-          title: { contains: title, mode: "insensitive" },
-          ...(userId && { userId }),
-        },
-      });
-
-      if (matches.length === 0) {
-        return `❌ No task found with title containing "${title}".`;
-      }
-
-      if (matches.length > 1) {
-        return `⚠️ Multiple tasks found:\n${matches
-          .map((t) => `• ${t.id} | ${t.title}`)
-          .join("\n")}\n\nPlease retry with the task ID.`;
-      }
-
-      task = await prisma.task.update({
-        where: { id: matches[0].id },
-        data: {
-          ...(priority && { priority }),
-          ...(status && { status }),
-          ...(dueDate && { dueDate: new Date(dueDate) }),
-        },
-      });
-    } else {
-      return "❌ You must provide either an ID or a title to update a task.";
+  async (args: Parameters<typeof updateTask>[0]) => {
+    try {
+      const task = await updateTask(args);
+      return `Task updated: ${formatTaskSummary(task)}`;
+    } catch (err: any) {
+      // Preserve error messages so agent can react (e.g. disambiguation)
+      return `Error: ${err.message || String(err)}`;
     }
-
-    return `✏️ Task "${task.title}" was updated successfully. 
-Priority: ${task.priority}, Status: ${task.status}, Due: ${
-      task.dueDate ? task.dueDate.toDateString() : "No due date"
-    }.`;
   },
   {
     name: "update-task",
     description: `
-      Update a task by ID or title (case-insensitive).
-      Can update priority, status, and due date.
-      If multiple tasks are found with the same title, user must clarify by ID.`,
+     Update a user's task by ID or title. 
+      Can modify title, priority, status, and due date. 
+      Always include 'userId' to scope the update.`,
     schema: updateTaskSchema,
   }
 );
 
-// Delete Task
+/** Delete Task tool */
 const deleteTaskTool = tool(
-  async ({ id }: z.infer<typeof deleteTaskSchema>) => {
-    const deleted = await prisma.task.delete({ where: { id } });
-    return `🗑️ Task deleted: ${deleted.title} | Priority: ${deleted.priority} | Status: ${deleted.status}`;
+  async (args: Parameters<typeof deleteTaskCoreTool>[0]) => {
+    const deleted = await deleteTaskCoreTool(args);
+    return `Task deleted: ${formatTaskSummary(deleted)}`;
   },
   {
     name: "delete-task",
@@ -193,20 +103,13 @@ const deleteTaskTool = tool(
   }
 );
 
-// Search Task
+/** Search Task tool */
 const searchTaskTool = tool(
-  async ({ query, userId }: z.infer<typeof searchTaskSchema>) => {
-    const tasks = await prisma.task.findMany({
-      where: {
-        title: { contains: query, mode: "insensitive" },
-        userId,
-      },
-      select: { id: true, title: true },
-    });
-
-    if (tasks.length === 0) return `❌ No tasks found for "${query}".`;
-
-    return tasks
+  async (args: Parameters<typeof searchTask>[0]) => {
+    const results = await searchTask(args);
+    if (!results || results.length === 0)
+      return `❌ No tasks found for "${args.query}".`;
+    return results
       .map((t) => `• task id: ${t.id} | Title: ${t.title}`)
       .join("\n");
   },
@@ -217,14 +120,17 @@ const searchTaskTool = tool(
   }
 );
 
-// Get Current Date
-const getCurrentDate = tool(
-  async () => {
-    return new Date().toISOString();
+/** Get Current Date tool */
+export const getCurrentDateTool = tool(
+  () => {
+    // Use Luxon to get the current date and time in ISO 8601 format
+    const now = DateTime.now().setZone("UTC").toISO(); // or .setZone("Asia/Karachi") if you want local
+    return now;
   },
   {
     name: "get-current-date",
-    description: "Returns the current date and time in ISO 8601 format.",
+    description:
+      "Returns the current date and time in ISO 8601 format (e.g., 2025-10-12T10:45:00.000Z).",
   }
 );
 
@@ -234,5 +140,5 @@ export const taskTools = [
   deleteTaskTool,
   fetchTasksTool,
   searchTaskTool,
-  getCurrentDate,
+  getCurrentDateTool,
 ];

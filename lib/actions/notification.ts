@@ -65,7 +65,7 @@ export async function sendTaskEmailNotifications(
 
   try {
     const res = await transporter.sendMail({
-      from: `"AI Task Manager" <${process.env.EMAIL_FROM}>`,
+      from: `"NeuraTask" <${process.env.EMAIL_FROM}>`,
       replyTo: "no-reply@ai-task-manager.com",
       to: email,
       subject: "Your Daily Task Summary",

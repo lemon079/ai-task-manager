@@ -36,7 +36,7 @@ export default function Sidebar({ onLinkClick }: { onLinkClick?: () => void }) {
 
   return (
     <aside className="w-64 flex bg-blue-100 flex-col border-r border-blue-200 shadow-xl sticky top-0 left-0 h-screen">
-      <div className="p-6 text-xl font-bold text-blue-900">AI Task & Journals</div>
+      <div className="p-6 text-xl font-bold text-blue-900">NeuraTask</div>
       <CustomSeparator />
 
       <ScrollArea className="flex-1 p-2">

@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "AI Task Automation - Sign In",
+  title: "NeuraTask - Sign In",
   description: "Login or register to access your AI Automation dashboard.",
   keywords: ["AI Automation", "journal AI", "Login", "Sign In"],
   robots: {

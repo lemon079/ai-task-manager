@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { taskAgentWithChathistory } from "@/lib/langchain/memory/task";
 import { auth } from "@/auth";
 
@@ -6,30 +6,27 @@ export async function POST(req: NextRequest) {
   try {
     const session = await auth();
     const userId = session?.user.id;
+
     if (!userId) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { content } = await req.json();
 
-    // Run your agent (no streaming)
     const response = await taskAgentWithChathistory.invoke(
       { input: content, userId },
       { configurable: { sessionId: `chat-${userId}` } }
     );
 
-    return new Response(JSON.stringify({ result: response.output }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
+    // ✅ Return "Try Again" if no response output
+    if (!response?.output) {
+      return NextResponse.json({ error: "Try Again" }, { status: 400 });
+    }
+
+    return NextResponse.json({ result: response.output }, { status: 200 });
+
   } catch (error: any) {
     console.error("❌ Error in POST /task-ai:", error);
-    return new Response(JSON.stringify({ error: "Internal Server Error" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

@@ -13,13 +13,17 @@ const createTaskSchema = z.object({
 });
 
 const updateTaskSchema = z.object({
-  id: z.string(),                  // update directly by ID
-  title: z.string().optional(),               // can also update directly by title
+  id: z.string().optional(), // can update by ID
+  title: z.string().optional(), // or update by title
+  newTitle: z.string().optional(), // optional if updating the title
   priority: z.nativeEnum(Priority).optional(),
   status: z.nativeEnum(Status).optional(),
-  dueDate: z.string().date().optional(),  // accepts ISO string dates
-  userId: z.string()
-});
+  dueDate: z.string().optional(), // ISO string (parse later)
+  userId: z.string(), // required to identify user's scope
+}).refine(
+  (data) => data.id || data.title,
+  { message: "Provide either 'id' or 'title' to identify the task." }
+);
 
 const deleteTaskSchema = z.object({
   id: z.string(),

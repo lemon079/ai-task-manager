@@ -21,7 +21,7 @@ export default function ChatMessages() {
     <ScrollArea className="h-full !no-scrollbar scroll-smooth mx-2">
       <div className="flex flex-col gap-3">
         {messages?.length === 0 && (
-          <p className="no-result mt-4">Send message to g et started.</p>
+          <p className="no-result mt-4">Send message to get started.</p>
         )}
         {isLoading && <CustomLoader/>}
         {messages?.map((msg: Message) => (

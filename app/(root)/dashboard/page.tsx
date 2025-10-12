@@ -13,22 +13,22 @@ export default async function DashboardPage() {
         {/* Right side (Calendar + Heading) */}
         <section className="flex-1">
           <Heading
+            title="Tasks"
+            subtitle="All of your tasks"
+          />
+          <TaskTable tasks={tasks} isDashboard />
+
+        </section>
+
+        {/* Left side (Chart) */}
+        <section className="flex-1">
+          <Heading
             title="Events Schedule"
             subtitle="Handle all your events with ease!"
           />
           <div className="overflow-hidden">
             <ScheduleCalendar tasks={tasks} />
           </div>
-        </section>
-
-        {/* Left side (Chart) */}
-        <section className="flex-1">
-          <Heading
-            title="Tasks"
-            subtitle="All of your tasks"
-          />
-          <TaskTable tasks={tasks}/>
-
         </section>
       </div>
     </div>

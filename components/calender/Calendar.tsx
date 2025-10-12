@@ -35,9 +35,9 @@ export function ScheduleCalendar({ tasks }: { tasks: Task[] }) {
         ...dayTasks.map((task) =>
           task.dueDate
             ? Math.ceil(
-                (new Date(task.dueDate).getTime() - today.getTime()) /
-                  (1000 * 60 * 60 * 24)
-              )
+              (new Date(task.dueDate).getTime() - today.getTime()) /
+              (1000 * 60 * 60 * 24)
+            )
             : Infinity
         )
       );

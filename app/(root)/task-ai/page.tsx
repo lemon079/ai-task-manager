@@ -19,7 +19,7 @@ export default async function Page() {
         <CardHeader className="text-center p-2">
           <NotebookPen className="ml-auto"/>
           <CardTitle className="text-lg sm:text-xl font-bold">
-            AI Task Manager
+            NeuraTask
           </CardTitle>
           <CardDescription>
             Chat with your AI assistant to manage tasks.
