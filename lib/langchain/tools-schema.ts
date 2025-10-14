@@ -26,7 +26,8 @@ const updateTaskSchema = z.object({
 );
 
 const deleteTaskSchema = z.object({
-  id: z.string(),
+  query: z.string().describe("Natural language description of the task to delete"),
+  userId: z.string().optional(),
 });
 
 const fetchTasksSchema = z.object({

@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { format, isBefore, isToday } from "date-fns";
 import { deleteTask } from "@/lib/actions/task";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 
 const priorityColors: Record<string, string> = {
   HIGH: "bg-red-300",
@@ -22,10 +23,26 @@ const priorityColors: Record<string, string> = {
 export const columns: ColumnDef<Task>[] = [
   // 🆔 Task ID Column
   {
-    accessorKey: "title",
-    header: "Title",
+  accessorKey: "title",
+  header: "Title",
+  cell: ({ row }) => {
+    const title = row.getValue("title") as string;
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="max-w-[150px] truncate font-medium text-gray-800 cursor-pointer">
+              {title}
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{title}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
   },
-
+},
   {
     accessorKey: "priority",
     header: ({ column }) => (

@@ -31,7 +31,7 @@ export default function RootDashboardLayout({ children }: { children: React.Reac
       <div className="hidden md:flex"> {/* on small screens, hide the actual sidebar */}
         <Sidebar />
       </div>
-      <main className={cn("flex-1 w-full max-w-6xl mx-auto p-6")}>
+      <main className={cn("flex-1 w-full max-w-6xl mx-auto py-6")}>
         <ModalProvider>
           {children}
         </ModalProvider>

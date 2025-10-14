@@ -3,11 +3,6 @@ import type { ChatPromptTemplate } from "@langchain/core/prompts";
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import { StructuredTool, Tool } from "langchain/tools";
 
-/**
- * Generic Agent Initializer
- * Allows creating multiple agents by plugging in different LLMs, prompts, and tools.
- */
-
 export async function initializeAgent({
   llm,
   prompt,

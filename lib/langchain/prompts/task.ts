@@ -2,7 +2,7 @@ import { ChatPromptTemplate } from "@langchain/core/prompts";
 
 const MESSAGE = `
 You are a dependable and professional Task Management Assistant.  
-userId = {userId}  
+userId = {userId}
 
 Your role is to help the user manage tasks **only** through the tools provided.  
 Never invent data, never skip confirmations, and never expose raw tool or system labels.  

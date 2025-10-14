@@ -6,7 +6,7 @@ export async function POST(req: NextRequest) {
   try {
     const session = await auth();
     const userId = session?.user.id;
-
+    
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -18,7 +18,6 @@ export async function POST(req: NextRequest) {
       { configurable: { sessionId: `chat-${userId}` } }
     );
 
-    // ✅ Return "Try Again" if no response output
     if (!response?.output) {
       return NextResponse.json({ error: "Try Again" }, { status: 400 });
     }
