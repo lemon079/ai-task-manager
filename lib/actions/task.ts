@@ -4,14 +4,16 @@ import { z } from "zod";
 import { prisma } from "@/prisma/prisma";
 import {
   createTaskSchema,
-  deleteTaskSchema,
   updateTaskSchema,
 } from "@/lib/langchain/tools-schema";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
+import { gpt } from "../langchain/llm";
+import { summarizeTaskPrompt } from "../langchain/prompts/task";
+import { Task } from "@prisma/client";
 
 // -------------------- FETCH TASKS --------------------
-export async function getTasks() {
+async function getTasks() {
   const session = await auth();
   const userId = session?.user.id;
   if (!userId) throw new Error("Unauthorized");
@@ -54,7 +56,7 @@ export async function getTasks() {
 }
 
 // -------------------- CREATE TASK --------------------
-export async function createTask(args: z.infer<typeof createTaskSchema>) {
+async function createTask(args: z.infer<typeof createTaskSchema>) {
   const { title, userId, priority, dueDate } = args;
   const parsedDate = dueDate ? new Date(dueDate) : null;
 
@@ -73,7 +75,7 @@ export async function createTask(args: z.infer<typeof createTaskSchema>) {
 }
 
 // -------------------- UPDATE TASK --------------------
-export async function updateTask(args: z.infer<typeof updateTaskSchema>) {
+async function updateTask(args: z.infer<typeof updateTaskSchema>) {
   const { newTitle, id, title, priority, status, dueDate, userId } = args;
 
   if (id) {
@@ -126,8 +128,28 @@ export async function updateTask(args: z.infer<typeof updateTaskSchema>) {
 }
 
 // -------------------- DELETE TASK --------------------
-export async function deleteTask(args: { id: string }) {
+async function deleteTask(args: { id: string }) {
   const deleted = await prisma.task.delete({ where: { id: args.id } });
   revalidatePath("/dashboard");
   return deleted;
 }
+
+async function summarizeTasks(tasks: Task[]) {
+  if (!tasks?.length) return "No tasks available for summary.";
+
+  // Create a LangChain pipeline
+  const pipeline = summarizeTaskPrompt.pipe(gpt);
+
+  // Run summarization
+  const res = await pipeline.invoke({ tasks });
+
+  // Extract text depending on model output format
+  const summary =
+    typeof res === "string"
+      ? res
+      : res?.content ?? res?.text ?? JSON.stringify(res);
+
+  return summary;
+}
+
+export { getTasks, createTask, updateTask, deleteTask, summarizeTasks };
