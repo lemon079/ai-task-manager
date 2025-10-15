@@ -11,7 +11,7 @@ import { revalidatePath } from "next/cache";
 import { gpt } from "../langchain/llm";
 import { summarizeTaskPrompt } from "../langchain/prompts/task";
 import { Task } from "@prisma/client";
-
+import { deleteTaskEmbedding } from "../langchain/embeddings/crud";
 // -------------------- FETCH TASKS --------------------
 async function getTasks() {
   const session = await auth();
@@ -130,6 +130,7 @@ async function updateTask(args: z.infer<typeof updateTaskSchema>) {
 // -------------------- DELETE TASK --------------------
 async function deleteTask(args: { id: string }) {
   const deleted = await prisma.task.delete({ where: { id: args.id } });
+  await deleteTaskEmbedding(args.id);
   revalidatePath("/dashboard");
   return deleted;
 }
