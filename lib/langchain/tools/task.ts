@@ -30,9 +30,8 @@ function formatDate(d: Date | null | undefined) {
 }
 
 function formatTaskSummary(t: Task) {
-  return `${t.title} | ${t.status} | ${
-    t.priority
-  } | Created: ${t.createdAt.toDateString()} | Due: ${formatDate(t.dueDate)}`;
+  return `${t.title} | ${t.status} | ${t.priority
+    } | Created: ${t.createdAt.toDateString()} | Due: ${formatDate(t.dueDate)}`;
 }
 
 /** ----------------------------
@@ -40,14 +39,15 @@ function formatTaskSummary(t: Task) {
  * ---------------------------- */
 const createTaskTool = tool(
   async (args) => {
-    const { title, userId, priority, dueDate } = args;
+    const { title, description, userId, priority, dueDate } = args;
     const parsedDate = dueDate ? new Date(dueDate) : null;
 
     const task = await prisma.task.create({
       data: {
         title,
+        description,
         userId,
-        priority: (priority as any) || "medium",
+        priority: priority ?? "medium",
         dueDate: parsedDate,
         status: "pending",
       },
@@ -58,11 +58,11 @@ const createTaskTool = tool(
       console.error("Embedding index failed:", err)
     );
 
-    return `Task created: ${task.title}`;
+    return `✅ Task created: ${task.title}`;
   },
   {
     name: "create-task",
-    description: `Create a task. Always provide priority exactly as 'low', 'medium', or 'high'. Always provide dueDate as YYYY-MM-DD.`,
+    description: `Create a task. Always provide priority exactly as 'low', 'medium', or 'high'. Always provide dueDate as YYYY-MM-DD. Optionally include a description.`,
     schema: createTaskSchema,
   }
 );
@@ -111,14 +111,22 @@ const fetchTasksTool = tool(
  * ---------------------------- */
 const updateTaskTool = tool(
   async (args) => {
-    const { newTitle, id, priority, status, dueDate } = args;
+    const { newTitle, id, title, description, priority, status, dueDate, userId } = args;
     let task: Task | null = null;
 
+    // Update by ID if provided
     if (id) {
+      task = await prisma.task.findUnique({ where: { id } });
+
+      if (!task) {
+        return `❌ No task found with ID: ${id}`;
+      }
+
       task = await prisma.task.update({
         where: { id },
         data: {
           ...(newTitle && { title: newTitle }),
+          ...(description !== undefined && { description }),
           ...(priority && { priority }),
           ...(status && { status }),
           ...(dueDate && { dueDate: new Date(dueDate) }),
@@ -129,16 +137,54 @@ const updateTaskTool = tool(
         console.error("Embedding update failed:", err)
       );
 
-      return `Task updated: ${task.title}`;
+      return `✅ Task updated: ${task.title}`;
     }
 
-    // rest unchanged
+    // Update by title if ID is not provided
+    if (title) {
+      const matchingTasks = await prisma.task.findMany({
+        where: {
+          userId,
+          title: { contains: title, mode: "insensitive" },
+        },
+      });
+
+      if (matchingTasks.length === 0) {
+        return `❌ No task found matching title: "${title}"`;
+      }
+
+      if (matchingTasks.length > 1) {
+        const taskList = matchingTasks
+          .map((t) => `• ${t.title} (ID: ${t.id})`)
+          .join("\n");
+        return `⚠️ Multiple tasks found matching "${title}". Please specify the ID:\n${taskList}`;
+      }
+
+      task = await prisma.task.update({
+        where: { id: matchingTasks[0].id },
+        data: {
+          ...(newTitle && { title: newTitle }),
+          ...(description !== undefined && { description }),
+          ...(priority && { priority }),
+          ...(status && { status }),
+          ...(dueDate && { dueDate: new Date(dueDate) }),
+        },
+      });
+
+      updateTaskEmbedding(task).catch((err) =>
+        console.error("Embedding update failed:", err)
+      );
+
+      return `✅ Task updated: ${task.title}`;
+    }
+
+    return `❌ Please provide either an 'id' or 'title' to identify the task.`;
   },
   {
     name: "update-task",
     description: `
      Update a user's task by ID or title. 
-      Can modify title, priority, status, and due date. 
+      Can modify title, description, priority, status, and due date. 
       Always include 'userId' to scope the update.`,
     schema: updateTaskSchema,
   }

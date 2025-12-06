@@ -1,6 +1,6 @@
 import { DateTime } from "luxon";
 import { NextResponse } from "next/server";
-import { getTasks, summarizeTasks } from "@/lib/actions/task";
+import { getTasksForUser, summarizeTasks } from "@/lib/actions/task";
 import { sendTaskEmailNotifications } from "@/lib/actions/notification";
 import { prisma } from "@/prisma/prisma";
 
@@ -45,8 +45,8 @@ export async function GET() {
 
       console.log(`[CRON] Sending daily task summary to ${user.email} (${user.timeZone})`);
 
-      // Get tasks and send notifications
-      const tasks = await getTasks();
+      // Get tasks for this specific user (not session-based)
+      const tasks = await getTasksForUser(user.id);
       if (!tasks || tasks.length === 0) {
         console.log(`[CRON] No tasks for ${user.email}`);
         continue;

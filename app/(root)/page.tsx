@@ -1,60 +1,83 @@
-"use client";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { useForm } from "react-hook-form";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { LayoutDashboard, Workflow, Settings, ArrowRight, Sparkles } from "lucide-react";
+import Link from "next/link";
 
-const formSchema = z.object({
-  input: z.string().min(2, { message: "Must be at least 2 characters." }),
-});
+const quickActions = [
+  {
+    title: "Dashboard",
+    description: "View your tasks and calendar at a glance",
+    href: "/dashboard",
+    icon: LayoutDashboard,
+    color: "text-primary",
+    bgColor: "bg-primary/10",
+  },
+  {
+    title: "Task AI",
+    description: "Chat with AI to manage your tasks naturally",
+    href: "/task-ai",
+    icon: Workflow,
+    color: "text-accent",
+    bgColor: "bg-accent/10",
+  },
+  {
+    title: "Settings",
+    description: "Configure notifications and preferences",
+    href: "/settings",
+    icon: Settings,
+    color: "text-muted-foreground",
+    bgColor: "bg-muted",
+  },
+];
 
-type FormValues = z.infer<typeof formSchema>;
-
-export default function Page() {
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: { input: "" },
-  });
-
-  async function handleSubmit(formData: FormData) {
-    const input = formData.get("input") as string;
-    console.log("Submitted input:", input);
-    // You can handle your input here (e.g., send to API)
-  }
-
+export default function HomePage() {
   return (
-    <div className="max-w-md mx-auto p-6">
-      <h1 className="text-xl font-bold mb-4">Simple Form</h1>
-      <Form {...form}>
-        <form action={handleSubmit} className="space-y-4">
-          <FormField
-            control={form.control}
-            name="input"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Your Input</FormLabel>
-                <FormControl>
-                  <Input placeholder="Enter your input" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+    <div className="min-h-[80vh] flex flex-col items-center justify-center px-4">
+      {/* Hero Section */}
+      <div className="text-center mb-10">
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-6">
+          <Sparkles className="size-4" />
+          <span className="text-sm font-medium">AI-Powered Task Management</span>
+        </div>
+        <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
+          Welcome to <span className="text-gradient">NeuraTask</span>
+        </h1>
+        <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+          Manage your tasks effortlessly using natural language. Create, update, and organize
+          tasks just by chatting with your AI assistant.
+        </p>
+      </div>
 
-          <Button type="submit" className="w-full">
-            Submit
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl">
+        {quickActions.map((action) => (
+          <Link key={action.href} href={action.href}>
+            <Card className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-primary/50 h-full">
+              <CardHeader>
+                <div className={`w-12 h-12 rounded-lg ${action.bgColor} flex items-center justify-center mb-2`}>
+                  <action.icon className={`h-6 w-6 ${action.color}`} />
+                </div>
+                <CardTitle className="flex items-center justify-between">
+                  {action.title}
+                  <ArrowRight className="h-4 w-4 opacity-0 -translate-x-2 transition-all group-hover:opacity-100 group-hover:translate-x-0" />
+                </CardTitle>
+                <CardDescription>{action.description}</CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
+        ))}
+      </div>
+
+      {/* CTA */}
+      <div className="mt-10">
+        <Link href="/task-ai">
+          <Button size="lg" className="gap-2">
+            <Workflow className="size-5" />
+            Start Chatting with AI
           </Button>
-        </form>
-      </Form>
+        </Link>
+      </div>
     </div>
   );
 }
+

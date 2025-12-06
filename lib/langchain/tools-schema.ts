@@ -8,6 +8,7 @@ import z from "zod";
 const createTaskSchema = z.object({
   userId: z.string(),
   title: z.string(),
+  description: z.string().optional(),
   priority: z.nativeEnum(Priority),
   dueDate: z.coerce.date().optional(), // allow ISO string or Date
 });
@@ -16,6 +17,7 @@ const updateTaskSchema = z.object({
   id: z.string().optional(), // can update by ID
   title: z.string().optional(), // or update by title
   newTitle: z.string().optional(), // optional if updating the title
+  description: z.string().optional(),
   priority: z.nativeEnum(Priority).optional(),
   status: z.nativeEnum(Status).optional(),
   dueDate: z.string().optional(), // ISO string (parse later)

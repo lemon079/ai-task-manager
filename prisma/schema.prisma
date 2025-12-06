@@ -69,15 +69,20 @@ model Task {
   id               String    @id @default(cuid())
   userId           String
   title            String
-  priority         Priority  @default(medium) // ✅ Enum instead of String
-  status           Status    @default(pending) // ✅ Enum instead of String
-  dueDate          DateTime? // ✅ New field for deadlines
+  description      String?
+  priority         Priority  @default(medium)
+  status           Status    @default(pending)
+  dueDate          DateTime?
   createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
   deadlineNotified Boolean   @default(false)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([userId, dueDate])
+  @@index([status])
+  @@index([priority])
 }
 
 model Message {

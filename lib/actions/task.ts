@@ -55,6 +55,51 @@ async function getTasks() {
   }
 }
 
+// -------------------- FETCH TASKS FOR SPECIFIC USER (for cron jobs) --------------------
+async function getTasksForUser(userId: string) {
+  if (!userId) throw new Error("userId is required");
+
+  try {
+    const now = new Date();
+
+    // Fetch all tasks for user
+    const tasks = await prisma.task.findMany({
+      where: { userId },
+      include: { user: true },
+      orderBy: { createdAt: "desc" },
+    });
+
+    // Find overdue ones
+    const overdueTasks = tasks.filter(
+      (task) =>
+        task.dueDate &&
+        new Date(task.dueDate) < now &&
+        task.status !== "completed" &&
+        task.status !== "over_due"
+    );
+
+    // Mark overdue tasks
+    if (overdueTasks.length > 0) {
+      await prisma.task.updateMany({
+        where: { id: { in: overdueTasks.map((t) => t.id) } },
+        data: { status: "over_due" },
+      });
+
+      // Refetch with user relation
+      return prisma.task.findMany({
+        where: { userId },
+        include: { user: true },
+        orderBy: { createdAt: "desc" },
+      });
+    }
+
+    return tasks;
+  } catch (error) {
+    console.error("❌ Error fetching tasks for user:", error);
+    throw new Error("Failed to fetch tasks for user");
+  }
+}
+
 // -------------------- CREATE TASK --------------------
 async function createTask(args: z.infer<typeof createTaskSchema>) {
   const { title, userId, priority, dueDate } = args;
@@ -153,4 +198,4 @@ async function summarizeTasks(tasks: Task[]) {
   return summary;
 }
 
-export { getTasks, createTask, updateTask, deleteTask, summarizeTasks };
+export { getTasks, getTasksForUser, createTask, updateTask, deleteTask, summarizeTasks };

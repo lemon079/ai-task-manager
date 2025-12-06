@@ -19,7 +19,8 @@ export async function withRetry<T>(
 
 /** Index or re-index a task */
 export async function createTaskEmbedding(task: Task) {
-  const text = `${task.title}. Priority: ${task.priority}. Status: ${task.status}. Due: ${task.dueDate}`;
+  const descriptionPart = task.description ? ` ${task.description}.` : "";
+  const text = `${task.title}.${descriptionPart} Priority: ${task.priority}. Status: ${task.status}. Due: ${task.dueDate}`;
   const vector = await withRetry(() => embeddings.embedQuery(text));
 
   await withRetry(() =>

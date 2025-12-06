@@ -1,49 +1,53 @@
-import type {
-  GetServerSidePropsContext,
-  NextApiRequest,
-  NextApiResponse,
-} from "next";
-import type { NextAuthOptions } from "next-auth";
-import { getServerSession } from "next-auth";
-import GoogleProvider from "next-auth/providers/google";
-import CredentialsProvider from "next-auth/providers/credentials";
+import NextAuth from "next-auth";
+import Google from "next-auth/providers/google";
+import Credentials from "next-auth/providers/credentials";
 import { prisma } from "./prisma/prisma";
 import bcrypt from "bcrypt";
 
-export const authConfig = {
+/**
+ * NextAuth v5 (Auth.js) Configuration
+ * @see https://authjs.dev/getting-started/migrating-to-v5
+ */
+export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID as string,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
-    CredentialsProvider({
+    Credentials({
       name: "Credentials",
       credentials: {
-        email: { label: "Email", type: "text" },
+        email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials.password) {
-          throw new Error("Missing credentials");
+          return null;
         }
 
+        const email = credentials.email as string;
+        const password = credentials.password as string;
+
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
+          where: { email },
         });
 
         if (!user || !user.hashedPassword) {
-          throw new Error("Invalid User or Password");
+          return null;
         }
 
-        const isValid = await bcrypt.compare(
-          credentials.password,
-          user.hashedPassword
-        );
+        const isValid = await bcrypt.compare(password, user.hashedPassword);
 
         if (!isValid) {
-          throw new Error("Invalid password");
+          return null;
         }
-        return user;
+
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          image: user.image,
+        };
       },
     }),
   ],
@@ -56,7 +60,7 @@ export const authConfig = {
       // On initial sign-in
       if (account && user) {
         token.accessToken = account.access_token;
-        token.refreshToken = account.refresh_token; // optional, needed for offline access
+        token.refreshToken = account.refresh_token;
       }
 
       // Attach DB id
@@ -82,21 +86,11 @@ export const authConfig = {
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
-        session.user.accessToken = token.accessToken as string;
+        (session.user as { accessToken?: string }).accessToken = token.accessToken as string;
       }
       return session;
     },
   },
-  secret: process.env.NEXTAUTH_SECRET, // required in production
   session: { strategy: "jwt" },
-} satisfies NextAuthOptions;
+});
 
-// Helper function so you can call auth() anywhere in server apis, components without having to pass authConfig each time
-export function auth(
-  ...args:
-    | [GetServerSidePropsContext["req"], GetServerSidePropsContext["res"]]
-    | [NextApiRequest, NextApiResponse]
-    | []
-) {
-  return getServerSession(...args, authConfig);
-}

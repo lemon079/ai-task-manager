@@ -2,7 +2,7 @@
 import { Loader2, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRef } from "react";
-import { useSendMessage } from "@/hooks/useSendMessage"; // import your hook
+import { useSendMessage } from "@/hooks/useSendMessage";
 import { Input } from "../ui/input";
 
 export function SubmitMessageButton() {
@@ -11,26 +11,39 @@ export function SubmitMessageButton() {
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const content = inputRef.current?.value;
+    const content = inputRef.current?.value?.trim();
     if (!content) return;
 
     if (inputRef.current) {
       inputRef.current.value = "";
     }
-    sendMessage({ content }); // call the mutation
+    sendMessage({ content });
   };
 
   return (
-    <form onSubmit={onSubmit} className="flex gap-2 items-center w-full">
+    <form onSubmit={onSubmit} className="flex gap-3 items-center w-full">
       <Input
         ref={inputRef}
         type="text"
-        placeholder="Ask"
-        className="flex-1 border p-2 rounded"
+        placeholder="Type a message... (e.g., 'Create a task to review PRs by Friday')"
+        className="flex-1 h-11 bg-background"
+        disabled={isPending}
       />
-      <Button variant={"customBlue"} disabled={isPending} type="submit">
-        {isPending ? <Loader2 className="animate-spin" /> : <Send />}
+      <Button
+        size="lg"
+        disabled={isPending}
+        type="submit"
+        className="h-11 px-6"
+      >
+        {isPending ? (
+          <Loader2 className="size-5 animate-spin" />
+        ) : (
+          <>
+            <Send className="size-4" />
+          </>
+        )}
       </Button>
     </form>
   );
 }
+
