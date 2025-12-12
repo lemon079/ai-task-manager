@@ -54,12 +54,12 @@ export default function HomePage() {
           <Link key={action.href} href={action.href}>
             <Card className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-primary/50 h-full">
               <CardHeader>
-                <div className={`w-12 h-12 rounded-lg ${action.bgColor} flex items-center justify-center mb-2`}>
-                  <action.icon className={`h-6 w-6 ${action.color}`} />
+                <div className={`size-12 rounded-lg ${action.bgColor} flex items-center justify-center mb-2`}>
+                  <action.icon className={`size-6 ${action.color}`} />
                 </div>
                 <CardTitle className="flex items-center justify-between">
                   {action.title}
-                  <ArrowRight className="h-4 w-4 opacity-0 -translate-x-2 transition-all group-hover:opacity-100 group-hover:translate-x-0" />
+                  <ArrowRight className="size-4 opacity-0 -translate-x-2 transition-all group-hover:opacity-100 group-hover:translate-x-0" />
                 </CardTitle>
                 <CardDescription>{action.description}</CardDescription>
               </CardHeader>

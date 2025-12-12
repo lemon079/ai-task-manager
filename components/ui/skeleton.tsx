@@ -56,9 +56,9 @@ const SkeletonAvatar = ({
     className?: string;
 }) => {
     const sizeClasses = {
-        sm: "h-8 w-8",
-        md: "h-10 w-10",
-        lg: "h-12 w-12",
+        sm: "size-8",
+        md: "size-10",
+        lg: "size-12",
     };
 
     return (

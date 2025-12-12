@@ -1,22 +1,19 @@
 import { auth } from "@/auth";
 import { prisma } from "@/prisma/prisma";
-import { NextResponse } from "next/server";
+import { successResponse, ApiErrors, withErrorHandler } from "@/lib/api-utils";
 
 export async function GET() {
-  try {
+  return withErrorHandler(async () => {
     const session = await auth();
-    const userId = session?.user.id;
+    if (!session?.user?.id) {
+      return ApiErrors.unauthorized();
+    }
 
     const messages = await prisma.message.findMany({
-      where: { chatId: `chat-${userId}` },
+      where: { chatId: `chat-${session.user.id}` },
       orderBy: { createdAt: "asc" },
     });
-    return NextResponse.json(messages);
-  } catch (error) {
-    console.error("Error fetching messages:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch messages" },
-      { status: 500 }
-    );
-  }
+
+    return successResponse(messages);
+  });
 }

@@ -88,8 +88,8 @@ export default function SettingsPage() {
         <Card className="shadow-sm">
           <CardHeader>
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Bell className="h-5 w-5 text-primary" />
+              <div className="size-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Bell className="size-5 text-primary" />
               </div>
               <div>
                 <CardTitle className="text-lg">Daily Task Summary</CardTitle>

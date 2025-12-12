@@ -27,7 +27,7 @@ export function TaskItemSkeleton() {
         <div className="flex items-center justify-between p-4 rounded-lg border bg-card">
             <div className="flex items-center gap-4 flex-1">
                 {/* Checkbox placeholder */}
-                <Skeleton className="h-5 w-5 rounded" />
+                <Skeleton className="size-5 rounded" />
 
                 {/* Task content */}
                 <div className="flex-1 space-y-2">

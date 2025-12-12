@@ -17,13 +17,13 @@ export default async function Page() {
         {/* Header */}
         <CardHeader className="border-b bg-gradient-to-r from-primary/5 to-accent/5 px-4 sm:px-6">
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shrink-0">
-              <Bot className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+            <div className="size-9 sm:size-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shrink-0">
+              <Bot className="size-4 sm:size-5 text-white" />
             </div>
             <div className="min-w-0">
               <CardTitle className="text-base sm:text-lg md:text-xl font-bold flex items-center gap-2">
                 NeuraTask AI
-                <Sparkles className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
+                <Sparkles className="size-3 sm:size-4 text-primary" />
               </CardTitle>
               <CardDescription className="text-xs sm:text-sm truncate">
                 Chat with AI to manage tasks

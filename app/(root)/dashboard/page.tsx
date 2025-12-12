@@ -69,7 +69,7 @@ export default async function DashboardPage() {
                 key={task.id}
                 className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
               >
-                <div className={`w-2 h-2 rounded-full ${task.status === "completed" ? "bg-green-500" :
+                <div className={`size-2 rounded-full ${task.status === "completed" ? "bg-green-500" :
                   task.status === "over_due" ? "bg-red-500" :
                     task.status === "in_progress" ? "bg-amber-500" :
                       "bg-slate-400"

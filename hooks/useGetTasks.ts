@@ -2,6 +2,12 @@
 import { Task } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
 
+interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+}
+
 export function useGetTasks() {
   return useQuery<Task[], Error>({
     queryKey: ["tasks"],
@@ -10,9 +16,9 @@ export function useGetTasks() {
       if (!res.ok) {
         throw new Error("Failed to fetch tasks");
       }
-      return res.json();
+      const json: ApiResponse<Task[]> = await res.json();
+      return json.data ?? [];
     },
-    retry: 1,
-    refetchOnWindowFocus: false,
+    staleTime: 1 * 60 * 1000, // 1 min - tasks change more frequently
   });
 }

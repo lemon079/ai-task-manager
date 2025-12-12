@@ -44,8 +44,8 @@ export default function StatCard({
                         </div>
                     )}
                 </div>
-                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Icon className="h-6 w-6 text-primary" />
+                <div className="size-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Icon className="size-6 text-primary" />
                 </div>
             </div>
         </div>

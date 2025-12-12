@@ -14,8 +14,9 @@ export function useSendMessage() {
       return data;
     },
     onSuccess: () => {
-      // Refetch messages so chat updates automatically
+      // Refetch messages and tasks (agent may create/update tasks)
       queryClient.invalidateQueries({ queryKey: ["messages"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
     },
   });
 }

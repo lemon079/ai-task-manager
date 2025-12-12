@@ -1,22 +1,19 @@
 import { auth } from "@/auth";
 import { prisma } from "@/prisma/prisma";
-import { NextResponse } from "next/server";
+import { successResponse, ApiErrors, withErrorHandler } from "@/lib/api-utils";
 
 export async function GET() {
-  try {
+  return withErrorHandler(async () => {
     const session = await auth();
-    const userId = session?.user.id;
+    if (!session?.user?.id) {
+      return ApiErrors.unauthorized();
+    }
+
     const tasks = await prisma.task.findMany({
-      where: {
-        userId: userId,
-      },
+      where: { userId: session.user.id },
+      orderBy: { createdAt: "desc" },
     });
-    return NextResponse.json(tasks, { status: 200 });
-  } catch (error) {
-    console.error("Error fetching tasks:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch tasks" },
-      { status: 500 }
-    );
-  }
+
+    return successResponse(tasks);
+  });
 }

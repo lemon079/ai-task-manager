@@ -32,7 +32,7 @@ export default function RootDashboardLayout({ children }: { children: React.Reac
         <Sidebar />
       </div>
       <main className={cn("flex-1 w-full overflow-y-auto")}>
-        <div className="max-w-7xl mx-auto px-4">
+        <div className="max-w-7xl mx-auto p-4">
           <ModalProvider>
             {children}
           </ModalProvider>

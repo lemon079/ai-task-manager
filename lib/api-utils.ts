@@ -79,7 +79,7 @@ export function withErrorHandler<T>(
     return handler().catch((error: unknown) => {
         const message = error instanceof Error ? error.message : "Unknown error";
         console.error("API Error:", message);
-        return ApiErrors.internalError();
+        return ApiErrors.internalError() as NextResponse<ApiResponse<T>>;
     });
 }
 
