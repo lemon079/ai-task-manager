@@ -8,14 +8,19 @@ import {
 } from "@/lib/langchain/tools-schema";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
-import { gpt } from "../langchain/llm";
+import { gemini, gpt } from "../langchain/llm";
 import { summarizeTaskPrompt } from "../langchain/prompts/task";
 import { Task } from "@prisma/client";
-import { deleteTaskEmbedding } from "../langchain/embeddings/crud";
+import {
+  createTaskEmbedding,
+  deleteTaskEmbedding,
+  updateTaskEmbedding,
+} from "../langchain/embeddings/crud";
+
 // -------------------- FETCH TASKS --------------------
 async function getTasks() {
   const session = await auth();
-  const userId = session?.user.id;
+  const userId = session?.user?.id;
   if (!userId) throw new Error("Unauthorized");
 
   try {
@@ -102,18 +107,30 @@ async function getTasksForUser(userId: string) {
 
 // -------------------- CREATE TASK --------------------
 async function createTask(args: z.infer<typeof createTaskSchema>) {
-  const { title, userId, priority, dueDate } = args;
+  const session = await auth();
+  const sessionUserId = session?.user?.id;
+  const effectiveUserId = sessionUserId || args.userId;
+  if (!effectiveUserId) throw new Error("Unauthorized");
+
+  const { title, description, priority, dueDate } = args;
   const parsedDate = dueDate ? new Date(dueDate) : null;
 
   const task = await prisma.task.create({
     data: {
       title,
-      userId,
+      description,
+      userId: effectiveUserId,
       priority: (priority as any) || "medium",
       dueDate: parsedDate,
       status: "pending",
     },
   });
+
+  try {
+    await createTaskEmbedding(task);
+  } catch (err) {
+    console.warn("Embedding index skipped or failed:", err);
+  }
 
   revalidatePath("/dashboard");
   return task;
@@ -121,18 +138,35 @@ async function createTask(args: z.infer<typeof createTaskSchema>) {
 
 // -------------------- UPDATE TASK --------------------
 async function updateTask(args: z.infer<typeof updateTaskSchema>) {
-  const { newTitle, id, title, priority, status, dueDate, userId } = args;
+  const session = await auth();
+  const sessionUserId = session?.user?.id;
+  const effectiveUserId = sessionUserId || args.userId;
+  if (!effectiveUserId) throw new Error("Unauthorized");
+
+  const { newTitle, id, title, description, priority, status, dueDate } = args;
 
   if (id) {
+    const existing = await prisma.task.findUnique({ where: { id } });
+    if (!existing || existing.userId !== effectiveUserId) {
+      throw new Error("Task not found or unauthorized");
+    }
+
     const updated = await prisma.task.update({
       where: { id },
       data: {
         ...(newTitle && { title: newTitle }),
+        ...(description !== undefined && { description }),
         ...(priority && { priority }),
         ...(status && { status }),
         ...(dueDate && { dueDate: new Date(dueDate) }),
       },
     });
+
+    try {
+      await updateTaskEmbedding(updated);
+    } catch (err) {
+      console.warn("Embedding update skipped or failed:", err);
+    }
 
     revalidatePath("/dashboard");
     return updated;
@@ -142,7 +176,7 @@ async function updateTask(args: z.infer<typeof updateTaskSchema>) {
     const matches = await prisma.task.findMany({
       where: {
         title: { contains: title, mode: "insensitive" },
-        ...(userId && { userId }),
+        userId: effectiveUserId,
       },
     });
 
@@ -159,11 +193,19 @@ async function updateTask(args: z.infer<typeof updateTaskSchema>) {
     const updated = await prisma.task.update({
       where: { id: matches[0].id },
       data: {
+        ...(newTitle && { title: newTitle }),
+        ...(description !== undefined && { description }),
         ...(priority && { priority }),
         ...(status && { status }),
         ...(dueDate && { dueDate: new Date(dueDate) }),
       },
     });
+
+    try {
+      await updateTaskEmbedding(updated);
+    } catch (err) {
+      console.warn("Embedding update skipped or failed:", err);
+    }
 
     revalidatePath("/dashboard");
     return updated;
@@ -174,8 +216,23 @@ async function updateTask(args: z.infer<typeof updateTaskSchema>) {
 
 // -------------------- DELETE TASK --------------------
 async function deleteTask(args: { id: string }) {
+  const session = await auth();
+  const sessionUserId = session?.user?.id;
+  if (!sessionUserId) throw new Error("Unauthorized");
+
+  const existing = await prisma.task.findUnique({ where: { id: args.id } });
+  if (!existing || existing.userId !== sessionUserId) {
+    throw new Error("Task not found or unauthorized");
+  }
+
   const deleted = await prisma.task.delete({ where: { id: args.id } });
-  await deleteTaskEmbedding(args.id);
+
+  try {
+    await deleteTaskEmbedding(args.id);
+  } catch (err) {
+    console.warn("Embedding delete skipped or failed:", err);
+  }
+
   revalidatePath("/dashboard");
   return deleted;
 }
@@ -183,19 +240,35 @@ async function deleteTask(args: { id: string }) {
 async function summarizeTasks(tasks: Task[]) {
   if (!tasks?.length) return "No tasks available for summary.";
 
-  // Create a LangChain pipeline
-  const pipeline = summarizeTaskPrompt.pipe(gpt);
+  try {
+    const hasGoogleKey =
+      process.env.GOOGLE_API_KEY &&
+      !process.env.GOOGLE_API_KEY.includes("PLACEHOLDER");
+    const model = hasGoogleKey ? gemini : gpt;
 
-  // Run summarization
-  const res = await pipeline.invoke({ tasks });
+    const pipeline = summarizeTaskPrompt.pipe(model);
+    const res = await pipeline.invoke({ tasks });
 
-  // Extract text depending on model output format
-  const summary =
-    typeof res === "string"
+    return typeof res === "string"
       ? res
       : res?.content ?? res?.text ?? JSON.stringify(res);
-
-  return summary;
+  } catch (error) {
+    console.warn("AI task summarization error, using fallback summary:", error);
+    const overdueCount = tasks.filter((t) => t.status === "over_due").length;
+    const pendingCount = tasks.filter(
+      (t) => t.status === "pending" || t.status === "in_progress"
+    ).length;
+    return `You have ${pendingCount} active task(s)${
+      overdueCount > 0 ? ` including ${overdueCount} overdue` : ""
+    }. Stay productive!`;
+  }
 }
 
-export { getTasks, getTasksForUser, createTask, updateTask, deleteTask, summarizeTasks };
+export {
+  getTasks,
+  getTasksForUser,
+  createTask,
+  updateTask,
+  deleteTask,
+  summarizeTasks,
+};

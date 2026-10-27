@@ -122,6 +122,10 @@ const updateTaskTool = tool(
         return `❌ No task found with ID: ${id}`;
       }
 
+      if (userId && task.userId !== userId) {
+        return `❌ Unauthorized: You do not have permission to update this task.`;
+      }
+
       task = await prisma.task.update({
         where: { id },
         data: {
@@ -133,9 +137,11 @@ const updateTaskTool = tool(
         },
       });
 
-      updateTaskEmbedding(task).catch((err) =>
-        console.error("Embedding update failed:", err)
-      );
+      try {
+        await updateTaskEmbedding(task);
+      } catch (err) {
+        console.warn("Embedding update skipped:", err);
+      }
 
       return `✅ Task updated: ${task.title}`;
     }
@@ -171,9 +177,11 @@ const updateTaskTool = tool(
         },
       });
 
-      updateTaskEmbedding(task).catch((err) =>
-        console.error("Embedding update failed:", err)
-      );
+      try {
+        await updateTaskEmbedding(task);
+      } catch (err) {
+        console.warn("Embedding update skipped:", err);
+      }
 
       return `✅ Task updated: ${task.title}`;
     }
@@ -195,64 +203,121 @@ const updateTaskTool = tool(
  * ---------------------------- */
 export const deleteTaskTool = tool(
   async ({ query, userId }: z.infer<typeof deleteTaskSchema>) => {
-    // Step 1: Find the most relevant task using embeddings
-    const results = await searchTaskEmbeddings(query, 3);
-    const filtered = results.filter(
-      (r) => !userId || r.metadata?.userId === userId
-    );
+    let taskToDelete: Task | null = null;
 
-    if (!filtered.length) return "No related tasks found to delete.";
+    // 1. Check if query is directly an ID
+    if (query) {
+      const directMatch = await prisma.task.findUnique({
+        where: { id: query },
+      });
+      if (directMatch && (!userId || directMatch.userId === userId)) {
+        taskToDelete = directMatch;
+      }
+    }
 
-    const bestMatch = filtered[0];
-    const taskId = bestMatch.id;
-    const title = bestMatch.metadata?.title;
+    // 2. Try semantic embedding search if not matched by ID
+    if (!taskToDelete) {
+      try {
+        const results = await searchTaskEmbeddings(query, 3);
+        const filtered = results.filter(
+          (r) => !userId || r.metadata?.userId === userId
+        );
+        if (filtered.length > 0) {
+          const match = await prisma.task.findUnique({
+            where: { id: filtered[0].id },
+          });
+          if (match && (!userId || match.userId === userId)) {
+            taskToDelete = match;
+          }
+        }
+      } catch (err) {
+        console.warn("Semantic delete search skipped or failed, falling back to database search:", err);
+      }
+    }
 
-    // Step 2: Delete from the database
-    await prisma.task.delete({ where: { id: taskId } });
+    // 3. Fallback: Search in Prisma by title
+    if (!taskToDelete) {
+      taskToDelete = await prisma.task.findFirst({
+        where: {
+          ...(userId && { userId }),
+          title: { contains: query, mode: "insensitive" },
+        },
+      });
+    }
 
-    // Step 3: Optionally delete its embedding too
-    await deleteTaskEmbedding(taskId);
+    if (!taskToDelete) {
+      return `❌ No matching task found to delete for "${query}".`;
+    }
 
-    return `✅ Deleted task: "${title}"`;
+    if (userId && taskToDelete.userId !== userId) {
+      return `❌ Unauthorized: You cannot delete another user's task.`;
+    }
+
+    // Delete from database
+    await prisma.task.delete({ where: { id: taskToDelete.id } });
+
+    // Safely delete embedding
+    try {
+      await deleteTaskEmbedding(taskToDelete.id);
+    } catch (err) {
+      console.warn("Embedding delete skipped:", err);
+    }
+
+    return `✅ Deleted task: "${taskToDelete.title}"`;
   },
   {
     name: "delete-task",
     description:
-      "Deletes a task based on a natural language query using embeddings. The most semantically similar task will be deleted.",
+      "Deletes a task based on its title, description, or ID. Verifies task ownership before deleting.",
     schema: deleteTaskSchema,
   }
 );
-// What tasks do I have related to improving the dashboard UI?
 
 /** ----------------------------
- * SEARCH TASK TOOL (Semantic)
+ * SEARCH TASK TOOL (Semantic with Fallback)
  * ---------------------------- */
 export const searchTaskTool = tool(
   async (args: z.infer<typeof searchTaskSchema>) => {
     const { query, userId } = args;
 
-    // ✅ Use the refactored embedding search function
-    const results = await searchTaskEmbeddings(query, 5);
+    try {
+      const results = await searchTaskEmbeddings(query, 5);
+      const filtered = results.filter(
+        (r) => !userId || r.metadata?.userId === userId
+      );
 
-    // Optionally filter results by userId if metadata contains it
-    const filtered = results.filter(
-      (r) => !userId || r.metadata?.userId === userId
-    );
+      if (filtered.length > 0) {
+        return filtered
+          .map(
+            (m) =>
+              `• ${m.metadata?.title} (${m.metadata?.status}, ${m.metadata?.priority})`
+          )
+          .join("\n");
+      }
+    } catch (err) {
+      console.warn("Semantic search failed, falling back to text search:", err);
+    }
 
-    if (!filtered.length) return "No related tasks found.";
+    // Fallback to Prisma database search
+    const dbTasks = await prisma.task.findMany({
+      where: {
+        ...(userId && { userId }),
+        title: { contains: query, mode: "insensitive" },
+      },
+      take: 5,
+      orderBy: { createdAt: "desc" },
+    });
 
-    // Return a formatted string for the agent
-    return filtered
-      .map(
-        (m) =>
-          `• ${m.metadata?.title} (${m.metadata?.status}, ${m.metadata?.priority})`
-      )
+    if (!dbTasks.length) return "No related tasks found.";
+
+    return dbTasks
+      .map((t) => `• ${t.title} (${t.status}, ${t.priority})`)
       .join("\n");
   },
   {
     name: "search-task",
     description:
-      "Search for tasks semantically (by meaning) using embeddings. Returns the most relevant results.",
+      "Search for tasks semantically or by keyword in titles. Returns the most relevant results.",
     schema: searchTaskSchema,
   }
 );

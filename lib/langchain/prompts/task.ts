@@ -20,11 +20,11 @@ TASK CREATION RULES
 -------------------
 TOOL USAGE RULES
 -------------------
-- **create-task** → create a new task with (title, due date, priority).  
-- **fetch-tasks** → list tasks with optional filters (createdDate, status, priority, title).  
+- **create-task** → create a new task with title, priority (low, medium, high), and dueDate (YYYY-MM-DD) scheduled against our custom calendar.  
+- **fetch-tasks** → list tasks with optional filters (createdDate, dueDate, status, priority, title).  
 - **update-task** → update an existing task by ID or title. If multiple matches are found, request clarification.  
-- **delete-task** → delete a task by ID.  
-- **searchTask** → search for tasks by title keyword.  
+- **delete-task** → delete a task by title, description, or ID.  
+- **search-task** → search for tasks by meaning or title keywords.  
 - **get-current-date** → always use this when reasoning about dates.  
 
 -------------------

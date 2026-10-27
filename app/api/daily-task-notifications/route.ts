@@ -4,8 +4,18 @@ import { getTasksForUser, summarizeTasks } from "@/lib/actions/task";
 import { sendTaskEmailNotifications } from "@/lib/actions/notification";
 import { prisma } from "@/prisma/prisma";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    // Secure cron endpoint with CRON_SECRET
+    const authHeader = req.headers.get("authorization");
+    const cronSecret = process.env.CRON_SECRET;
+    if (cronSecret && cronSecret !== "PLACEHOLDER_CRON_SECRET") {
+      const token = authHeader?.replace(/^Bearer\s+/i, "");
+      if (token !== cronSecret) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+    }
+
     // 1️⃣ Current UTC time
     const nowUTC = DateTime.utc();
     console.log(`[CRON] Running global check at UTC ${nowUTC.toFormat("HH:mm:ss")}`);

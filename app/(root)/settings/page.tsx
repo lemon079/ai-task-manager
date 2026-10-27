@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -12,42 +12,32 @@ import CustomLoader from "@/components/shared/CustomLoader";
 import { DateTime } from "luxon";
 import { Bell } from "lucide-react";
 
-export default function SettingsPage() {
-  const { settings, isLoading, saveSettings, isPending } = useSettings();
-
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [notificationTime, setNotificationTime] = useState("08:00");
-  const [timeZone, setTimeZone] = useState("");
-
-  // Store initial values for comparison
-  const [initialSettings, setInitialSettings] = useState<{
+function SettingsForm({
+  initialSettings,
+  saveSettings,
+  isPending,
+}: {
+  initialSettings: {
     notificationsEnabled: boolean;
-    notificationTime: string;
-    timeZone: string;
-  } | null>(null);
+    notificationTime?: string;
+    timeZone?: string;
+  };
+  saveSettings: any;
+  isPending: boolean;
+}) {
+  const defaultZone = useMemo(() => initialSettings.timeZone || DateTime.local().zoneName || "UTC", [initialSettings.timeZone]);
+  const defaultTime = initialSettings.notificationTime || "09:00";
+  const defaultEnabled = initialSettings.notificationsEnabled ?? true;
 
-  // Detect timezone using Luxon
-  useEffect(() => {
-    const detectedZone = DateTime.local().zoneName;
-    setTimeZone(detectedZone);
-  }, []);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(defaultEnabled);
+  const [notificationTime, setNotificationTime] = useState(defaultTime);
+  const [timeZone, setTimeZone] = useState(defaultZone);
 
-  useEffect(() => {
-    if (settings) {
-      const { notificationsEnabled, notificationTime, timeZone } = settings;
-      const detectedZone = DateTime.local().zoneName;
-
-      setNotificationsEnabled(notificationsEnabled);
-      setNotificationTime(notificationTime || "09:00");
-      setTimeZone(timeZone || detectedZone);
-
-      setInitialSettings({
-        notificationsEnabled,
-        notificationTime: notificationTime || "09:00",
-        timeZone: timeZone || detectedZone,
-      });
-    }
-  }, [settings]);
+  const [savedSettings, setSavedSettings] = useState({
+    notificationsEnabled: defaultEnabled,
+    notificationTime: defaultTime,
+    timeZone: defaultZone,
+  });
 
   const handleSave = () => {
     saveSettings(
@@ -55,7 +45,7 @@ export default function SettingsPage() {
       {
         onSuccess: () => {
           toast.success("Settings saved successfully");
-          setInitialSettings({ notificationsEnabled, notificationTime, timeZone });
+          setSavedSettings({ notificationsEnabled, notificationTime, timeZone });
         },
         onError: () => {
           toast.error("Failed to save settings");
@@ -65,15 +55,12 @@ export default function SettingsPage() {
   };
 
   const isChanged = useMemo(() => {
-    if (!initialSettings) return false;
     return (
-      notificationsEnabled !== initialSettings.notificationsEnabled ||
-      notificationTime !== initialSettings.notificationTime ||
-      timeZone !== initialSettings.timeZone
+      notificationsEnabled !== savedSettings.notificationsEnabled ||
+      notificationTime !== savedSettings.notificationTime ||
+      timeZone !== savedSettings.timeZone
     );
-  }, [notificationsEnabled, notificationTime, timeZone, initialSettings]);
-
-  if (isLoading) return <CustomLoader fullScreen />;
+  }, [notificationsEnabled, notificationTime, timeZone, savedSettings]);
 
   return (
     <div className="space-y-8">
@@ -142,5 +129,19 @@ export default function SettingsPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function SettingsPage() {
+  const { settings, isLoading, saveSettings, isPending } = useSettings();
+
+  if (isLoading || !settings) return <CustomLoader fullScreen />;
+
+  return (
+    <SettingsForm
+      initialSettings={settings}
+      saveSettings={saveSettings}
+      isPending={isPending}
+    />
   );
 }

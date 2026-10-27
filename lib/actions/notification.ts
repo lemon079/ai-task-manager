@@ -32,8 +32,13 @@ export async function sendTaskEmailNotifications(
   // Build task list in HTML
   let taskHtml = "<ul>";
   for (const task of tasksWithUser) {
+    if (!task.dueDate) {
+      taskHtml += `<li>📋 ${task.title} (No deadline set)</li>`;
+      continue;
+    }
+
     const diffDays = Math.ceil(
-      (new Date(task.dueDate!).getTime() - now.getTime()) /
+      (new Date(task.dueDate).getTime() - now.getTime()) /
         (1000 * 60 * 60 * 24)
     );
 
@@ -41,12 +46,13 @@ export async function sendTaskEmailNotifications(
     else if (diffDays === 0) taskHtml += `<li>📌 Due Today: ${task.title}</li>`;
     else if (diffDays <= 3)
       taskHtml += `<li>⏰ Upcoming in ${diffDays} day(s): ${task.title}</li>`;
-    else taskHtml += `<li>${task.title}</li>`; // optional: future tasks
+    else
+      taskHtml += `<li>📅 ${task.title} (Due: ${new Date(task.dueDate).toLocaleDateString()})</li>`;
   }
   taskHtml += "</ul>";
 
   // Convert AI Markdown summary to HTML using marked
-  const summaryHtml = summary ? marked(summary) : "";
+  const summaryHtml = summary ? await marked.parse(summary) : "";
 
   // Construct the full email HTML
   const emailHtml = `
