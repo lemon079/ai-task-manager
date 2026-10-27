@@ -45,6 +45,8 @@ export default function AddTaskModal({ variant = "default", className }: AddTask
                     setDueDate("");
                     setOpen(false);
                     queryClient.invalidateQueries({ queryKey: ["messages"] });
+                    queryClient.invalidateQueries({ queryKey: ["tasks"] });
+                    queryClient.invalidateQueries({ queryKey: ["calendar"] });
                 },
             }
         );

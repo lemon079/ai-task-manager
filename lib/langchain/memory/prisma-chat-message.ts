@@ -20,12 +20,15 @@ export class PrismaChatMessageHistory extends BaseChatMessageHistory {
   // Load messages from DB
   async getMessages() {
     const rows = await prisma.message.findMany({
-      where: { chatId: this.chatId, role: "assistant"},
-      orderBy: { createdAt: "asc" },
-      take: 5,
+      where: { chatId: this.chatId },
+      orderBy: { createdAt: "desc" },
+      take: 10,
     });
 
-    const stored: StoredMessage[] = rows.map((m) => ({
+    // Reverse to chronological order for conversation context
+    const chronologicalRows = rows.reverse();
+
+    const stored: StoredMessage[] = chronologicalRows.map((m) => ({
       type: m.role === "user" ? "human" : "ai",
       data: {
         content: m.content,

@@ -11,10 +11,8 @@ const DANGEROUS_PATTERNS = [
     /(\beval\s*\(|\bexec\s*\(|\bsystem\s*\(|\bos\.\w+\()/i,
     // Script injection
     /<script[\s\S]*?>[\s\S]*?<\/script>/i,
-    // Path traversal
-    /\.\.\//g,
-    // Command injection
-    /[;&|`$]/,
+    // Malicious shell execution patterns
+    /\b(rm\s+-rf|curl\s+[^|]+\|\s*(sh|bash)|powershell\s+-enc|cmd\.exe\s+\/c)\b/i,
 ];
 
 // Off-topic keywords that indicate non-task-related requests

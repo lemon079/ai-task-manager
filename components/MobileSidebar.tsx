@@ -17,17 +17,11 @@ export default function MobileSidebar() {
 
   // ✅ Detect if screen is >= 768px
   const isLargeScreen = useMedia({ minWidth: "768px" });
-
-  // ✅ Close the drawer automatically when screen becomes large
-  useEffect(() => {
-    if (isLargeScreen && open) {
-      setOpen(false);
-    }
-  }, [isLargeScreen, open]);
+  const effectiveOpen = isLargeScreen ? false : open;
 
   return (
     <div className="flex md:hidden px-2 items-center justify-between">
-      <Drawer open={open} onOpenChange={setOpen} direction="left">
+      <Drawer open={effectiveOpen} onOpenChange={setOpen} direction="left">
         <DrawerTrigger asChild>
           <Button variant="outline" className="m-2">
             <Menu size={24} />
