@@ -3,18 +3,20 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { Task } from "@prisma/client";
-import { ArrowUpDown, MoreHorizontal, Trash2, Pencil, CheckCircle2 } from "lucide-react";
+import { ArrowUpDown, MoreHorizontal, Trash2, CheckCircle2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { format, isBefore, isToday } from "date-fns";
-import { deleteTask } from "@/lib/actions/task";
+import { deleteTask, updateTask } from "@/lib/actions/task";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 import { Checkbox } from "../ui/checkbox";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 
 const priorityConfig: Record<string, { bg: string; text: string }> = {
   high: { bg: "bg-red-100", text: "text-red-700" },
@@ -29,21 +31,98 @@ const statusConfig: Record<string, { bg: string; text: string }> = {
   over_due: { bg: "bg-red-100", text: "text-red-700" },
 };
 
+function StatusCheckbox({ task }: { task: Task }) {
+  const isCompleted = task.status === "completed";
+  const queryClient = useQueryClient();
+  const router = useRouter();
+
+  const handleToggle = async () => {
+    try {
+      const nextStatus = isCompleted ? "pending" : "completed";
+      await updateTask({
+        id: task.id,
+        status: nextStatus,
+        userId: task.userId,
+      });
+      toast.success(isCompleted ? "Task marked pending" : "Task completed!");
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      router.refresh();
+    } catch {
+      toast.error("Failed to update task status");
+    }
+  };
+
+  return (
+    <Checkbox
+      checked={isCompleted}
+      onCheckedChange={handleToggle}
+      className="data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500 cursor-pointer"
+      aria-label="Mark as complete"
+    />
+  );
+}
+
+function TaskActions({ task }: { task: Task }) {
+  const isCompleted = task.status === "completed";
+  const queryClient = useQueryClient();
+  const router = useRouter();
+
+  const handleToggleComplete = async () => {
+    try {
+      const nextStatus = isCompleted ? "pending" : "completed";
+      await updateTask({
+        id: task.id,
+        status: nextStatus,
+        userId: task.userId,
+      });
+      toast.success(isCompleted ? "Task marked pending" : "Task marked complete!");
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      router.refresh();
+    } catch {
+      toast.error("Failed to update task status");
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      await deleteTask({ id: task.id });
+      toast.success("Task deleted");
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      router.refresh();
+    } catch {
+      toast.error("Failed to delete task");
+    }
+  };
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="size-8 p-0 hover:bg-muted cursor-pointer">
+          <MoreHorizontal className="size-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-40">
+        <DropdownMenuItem className="cursor-pointer" onClick={handleToggleComplete}>
+          <CheckCircle2 className="mr-2 size-4" />
+          {isCompleted ? "Mark Pending" : "Mark Complete"}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className="cursor-pointer text-destructive focus:text-destructive"
+          onClick={handleDelete}
+        >
+          <Trash2 className="mr-2 size-4" /> Delete
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 export const columns: ColumnDef<Task>[] = [
   // Status Checkbox Column
   {
     id: "select",
     header: () => <span className="sr-only">Status</span>,
-    cell: ({ row }) => {
-      const isCompleted = row.original.status === "completed";
-      return (
-        <Checkbox
-          checked={isCompleted}
-          className="data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
-          aria-label="Mark as complete"
-        />
-      );
-    },
+    cell: ({ row }) => <StatusCheckbox task={row.original} />,
     enableSorting: false,
     enableHiding: false,
   },
@@ -59,7 +138,11 @@ export const columns: ColumnDef<Task>[] = [
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className={`max-w-[200px] truncate font-medium ${isCompleted ? "line-through text-muted-foreground" : "text-foreground"}`}>
+              <div
+                className={`max-w-[200px] truncate font-medium ${
+                  isCompleted ? "line-through text-muted-foreground" : "text-foreground"
+                }`}
+              >
                 {title}
               </div>
             </TooltipTrigger>
@@ -89,7 +172,9 @@ export const columns: ColumnDef<Task>[] = [
       const config = priorityConfig[priority] || { bg: "bg-slate-100", text: "text-slate-600" };
 
       return (
-        <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${config.bg} ${config.text}`}>
+        <span
+          className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${config.bg} ${config.text}`}
+        >
           {priority.charAt(0).toUpperCase() + priority.slice(1)}
         </span>
       );
@@ -114,7 +199,9 @@ export const columns: ColumnDef<Task>[] = [
       const label = status.replace("_", " ");
 
       return (
-        <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${config.bg} ${config.text}`}>
+        <span
+          className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${config.bg} ${config.text}`}
+        >
           {label}
         </span>
       );
@@ -158,29 +245,6 @@ export const columns: ColumnDef<Task>[] = [
   {
     id: "actions",
     header: () => <span className="sr-only">Actions</span>,
-    cell: ({ row }) => (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="size-8 p-0 hover:bg-muted">
-            <MoreHorizontal className="size-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-40">
-          <DropdownMenuItem className="cursor-pointer">
-            <CheckCircle2 className="mr-2 size-4" /> Mark Complete
-          </DropdownMenuItem>
-          <DropdownMenuItem className="cursor-pointer">
-            <Pencil className="mr-2 size-4" /> Edit
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            className="cursor-pointer text-destructive focus:text-destructive"
-            onClick={() => deleteTask(row.original)}
-          >
-            <Trash2 className="mr-2 size-4" /> Delete
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    ),
+    cell: ({ row }) => <TaskActions task={row.original} />,
   },
 ];
