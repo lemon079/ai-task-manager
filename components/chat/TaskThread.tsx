@@ -78,14 +78,10 @@ export function TaskThread() {
                 <div className="flex-1 space-y-1.5 overflow-hidden min-w-0">
                   {/* Thinking Dots Animation (When AI is thinking / waiting for first tokens) */}
                   <MessagePrimitive.If hasContent={false}>
-                    <div className="flex items-center gap-1.5 py-1 text-muted-foreground text-xs">
-                      <span className="size-1.5 rounded-full bg-primary/70 animate-pulse" />
-                      <span className="text-[11px] font-medium text-muted-foreground">Thinking</span>
-                      <span className="inline-flex gap-1 items-center ml-0.5">
-                        <span className="size-1.5 rounded-full bg-muted-foreground/60 animate-bounce [animation-delay:-0.3s]" />
-                        <span className="size-1.5 rounded-full bg-muted-foreground/60 animate-bounce [animation-delay:-0.15s]" />
-                        <span className="size-1.5 rounded-full bg-muted-foreground/60 animate-bounce" />
-                      </span>
+                    <div className="flex items-center gap-1 py-1.5 px-0.5">
+                      <span className="size-1.5 rounded-full bg-muted-foreground/60 animate-bounce [animation-delay:-0.3s]" />
+                      <span className="size-1.5 rounded-full bg-muted-foreground/60 animate-bounce [animation-delay:-0.15s]" />
+                      <span className="size-1.5 rounded-full bg-muted-foreground/60 animate-bounce" />
                     </div>
                   </MessagePrimitive.If>
 
