@@ -22,6 +22,8 @@ export async function initializeAgent({
   const agentExecutor = new AgentExecutor({
     agent,
     tools,
+    maxIterations: 6,
+    returnIntermediateSteps: false,
   });
 
   return agentExecutor;
