@@ -16,8 +16,11 @@ function formatDateKey(d: Date | string): string {
   return `${year}-${month}-${day}`;
 }
 
-function getUrgencyColor(dayTasks: Task[], today: Date): string {
-  if (dayTasks.length === 0) return "bg-transparent";
+function getUrgencyInfo(dayTasks: Task[], today: Date): {
+  color: string;
+  ping: boolean;
+} {
+  if (dayTasks.length === 0) return { color: "bg-transparent", ping: false };
 
   const nearestDiff = Math.min(
     ...dayTasks.map((task) =>
@@ -30,15 +33,16 @@ function getUrgencyColor(dayTasks: Task[], today: Date): string {
     )
   );
 
-  if (nearestDiff < 0) return "bg-red-500"; // overdue
-  if (nearestDiff === 0) return "bg-orange-500"; // today
-  if (nearestDiff <= 3) return "bg-yellow-400"; // soon
-  if (nearestDiff <= 7) return "bg-green-400"; // next week
-  return "bg-gray-300"; // distant
+  if (nearestDiff < 0) return { color: "bg-rose-500", ping: true }; // overdue
+  if (nearestDiff === 0) return { color: "bg-amber-500", ping: true }; // today
+  if (nearestDiff <= 3) return { color: "bg-sky-500", ping: false }; // soon
+  if (nearestDiff <= 7) return { color: "bg-emerald-500", ping: false }; // next week
+  return { color: "bg-slate-400 dark:bg-slate-500", ping: false }; // distant
 }
 
 export function ScheduleCalendar({ tasks }: { tasks: Task[] }) {
   const today = useMemo(() => new Date(), []);
+  const todayKey = useMemo(() => formatDateKey(today), [today]);
   const { setModalOpen } = useModalContext();
   const [selectedTasks, setSelectedTasks] = useState<Task[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>("");
@@ -57,73 +61,93 @@ export function ScheduleCalendar({ tasks }: { tasks: Task[] }) {
 
   return (
     <>
-      <Calendar
-        mode="single"
-        className="rounded-lg border shadow-sm mt-5 size-full"
-        components={{
-          DayButton: ({ day, ...props }) => {
-            const key = formatDateKey(day.date);
-            const dayTasks = tasksByDate.get(key) ?? [];
-            const urgencyColor = getUrgencyColor(dayTasks, today);
+      <div className="w-full overflow-x-auto">
+        <Calendar
+          mode="single"
+          className="rounded-xl border border-border/70 shadow-2xs mt-4 size-full bg-card/40"
+          components={{
+            DayButton: ({ day, ...props }) => {
+              const key = formatDateKey(day.date);
+              const dayTasks = tasksByDate.get(key) ?? [];
+              const { color: urgencyColor, ping } = getUrgencyInfo(dayTasks, today);
+              const isTodayCell = key === todayKey;
 
-            return (
-              <button
-                {...props}
-                className={cn(
-                  "relative flex flex-col items-start justify-start border text-left",
-                  "size-full min-h-[80px] p-1.5 transition-colors cursor-pointer hover:bg-muted/50 rounded-md",
-                  dayTasks.length > 0 ? "border-primary/30" : "border-border"
-                )}
-                onClick={() => {
-                  if (dayTasks.length === 0) return;
-                  setSelectedTasks(dayTasks);
-                  setSelectedDate(
-                    day.date.toLocaleDateString(undefined, {
-                      weekday: "short",
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })
-                  );
-                  setModalOpen(true);
-                }}
-              >
-                <div className="font-semibold text-sm">{day.date.getDate()}</div>
-
-                {/* Ping Indicator */}
-                {dayTasks.length > 0 && (
-                  <div className="absolute top-1.5 right-1.5 flex items-center justify-center">
+              return (
+                <button
+                  {...props}
+                  className={cn(
+                    "relative flex flex-col items-start justify-start border text-left",
+                    "size-full min-h-[76px] sm:min-h-[84px] p-2 transition-all duration-200 cursor-pointer rounded-xl group",
+                    dayTasks.length > 0
+                      ? "border-primary/40 bg-primary/5 hover:bg-primary/10"
+                      : "border-border/50 hover:bg-muted/40",
+                    isTodayCell && "ring-1.5 ring-primary/60 font-semibold"
+                  )}
+                  onClick={() => {
+                    if (dayTasks.length === 0) return;
+                    setSelectedTasks(dayTasks);
+                    setSelectedDate(
+                      day.date.toLocaleDateString(undefined, {
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })
+                    );
+                    setModalOpen(true);
+                  }}
+                >
+                  <div className="flex items-center justify-between w-full">
                     <span
                       className={cn(
-                        "relative inline-flex size-2.5 rounded-full",
-                        urgencyColor
+                        "text-xs font-semibold tabular-nums",
+                        isTodayCell
+                          ? "text-primary font-bold"
+                          : "text-foreground group-hover:text-primary transition-colors"
                       )}
                     >
-                      <span
-                        className={cn(
-                          "absolute inline-flex h-full w-full rounded-full opacity-75 animate-ping",
-                          urgencyColor
-                        )}
-                      />
+                      {day.date.getDate()}
                     </span>
-                  </div>
-                )}
 
-                {/* Task count display */}
-                {dayTasks.length > 0 && (
-                  <div className="mt-auto text-xs text-muted-foreground font-medium truncate w-full">
-                    {dayTasks.length} {dayTasks.length > 1 ? "tasks" : "task"}
+                    {/* Urgency Badge Indicator */}
+                    {dayTasks.length > 0 && (
+                      <span className="relative flex size-2">
+                        {ping && (
+                          <span
+                            className={cn(
+                              "absolute inline-flex h-full w-full rounded-full opacity-75 animate-ping",
+                              urgencyColor
+                            )}
+                          />
+                        )}
+                        <span
+                          className={cn(
+                            "relative inline-flex size-2 rounded-full",
+                            urgencyColor
+                          )}
+                        />
+                      </span>
+                    )}
                   </div>
-                )}
-              </button>
-            );
-          },
-        }}
-      />
+
+                  {/* Task Count Pill */}
+                  {dayTasks.length > 0 && (
+                    <div className="mt-auto pt-1 w-full">
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20 truncate max-w-full">
+                        {dayTasks.length} {dayTasks.length > 1 ? "tasks" : "task"}
+                      </span>
+                    </div>
+                  )}
+                </button>
+              );
+            },
+          }}
+        />
+      </div>
 
       <ResponsiveDialog
         title={`Tasks on ${selectedDate}`}
-        description={`You have ${selectedTasks.length} scheduled task(s)`}
+        description={`Scheduled tasks for this day (${selectedTasks.length} total)`}
       >
         <TaskTable tasks={selectedTasks} />
       </ResponsiveDialog>
