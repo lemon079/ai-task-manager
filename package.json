@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "ts-node -O \"{\\\"module\\\":\\\"commonjs\\\"}\" tests/audit-verification.test.ts",
+    "test:eval": "tsx tests/agent-eval.test.ts",
     "test:e2e": "tsx tests/test-dev-ui.ts",
     "postinstall": "prisma generate",
     "migrate:deploy": "prisma migrate deploy"
