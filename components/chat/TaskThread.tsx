@@ -7,7 +7,6 @@ import {
   ActionBarPrimitive,
   BranchPickerPrimitive,
 } from "@assistant-ui/react";
-import { MarkdownTextPrimitive } from "@assistant-ui/react-markdown";
 import {
   ArrowUp,
   Square,
@@ -19,8 +18,8 @@ import {
   ArrowDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-const MarkdownText = () => <MarkdownTextPrimitive />;
+import { MarkdownText } from "./MarkdownText";
+import { CreateTaskToolUI } from "./TaskToolUI";
 
 export function TaskThread() {
   return (
@@ -76,13 +75,16 @@ export function TaskThread() {
                   <Bot className="size-3.5" />
                 </div>
                 <div className="flex-1 space-y-1.5 overflow-hidden min-w-0">
-                  <div className="prose prose-xs dark:prose-invert max-w-none text-foreground leading-relaxed text-xs">
-                    <MessagePrimitive.Content
-                      components={{
-                        Text: MarkdownText,
-                      }}
-                    />
-                  </div>
+                  <MessagePrimitive.Content
+                    components={{
+                      Text: MarkdownText,
+                      tools: {
+                        by_name: {
+                          create_task: CreateTaskToolUI,
+                        },
+                      },
+                    }}
+                  />
 
                   {/* Contextual Action Bar & Branch Picker - Hidden until hover */}
                   <div className="flex items-center gap-2 pt-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
