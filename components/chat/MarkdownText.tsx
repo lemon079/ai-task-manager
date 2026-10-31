@@ -92,16 +92,30 @@ export function MarkdownText(_props?: any) {
             {...props}
           />
         ),
-        a: ({ className, ...props }) => (
-          <a
-            className={cn(
-              "text-primary underline underline-offset-2 hover:opacity-80 transition-opacity font-medium",
-              className
-            )}
-            target="_blank"
-            rel="noopener noreferrer"
-            {...props}
-          />
+        a: ({ className, href, children, ...props }: any) => {
+          const isSafe = !href || /^(https?:|mailto:)/i.test(href);
+          if (!isSafe) {
+            return <span className={cn("text-muted-foreground underline", className)}>{children}</span>;
+          }
+          return (
+            <a
+              href={href}
+              className={cn(
+                "text-primary underline underline-offset-2 hover:opacity-80 transition-opacity font-medium",
+                className
+              )}
+              target="_blank"
+              rel="noopener noreferrer"
+              {...props}
+            >
+              {children}
+            </a>
+          );
+        },
+        img: ({ alt }: any) => (
+          <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground italic border border-border/60 rounded px-1.5 py-0.5 my-1">
+            📷 [Image: {alt || "External image suppressed"}]
+          </span>
         ),
         table: ({ className, ...props }) => (
           <div className="my-2 w-full overflow-x-auto">

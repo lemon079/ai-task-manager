@@ -2,7 +2,6 @@
 
 import { useLocalRuntime, type ChatModelAdapter, fromThreadMessageLike } from "@assistant-ui/react";
 import { useQueryClient } from "@tanstack/react-query";
-import axios, { AxiosError } from "axios";
 import { useMemo } from "react";
 import { toast } from "sonner";
 
@@ -33,7 +32,7 @@ export function useTaskAgentRuntime(initialMessages: InitialChatMessage[] = []) 
 
   const chatModel = useMemo<ChatModelAdapter>(() => {
     return {
-      async run({ messages, abortSignal }) {
+      async *run({ messages, abortSignal }) {
         const lastMessage = messages[messages.length - 1];
         let content = "";
 
@@ -47,29 +46,116 @@ export function useTaskAgentRuntime(initialMessages: InitialChatMessage[] = []) 
         }
 
         try {
-          const res = await axios.post(
-            "/api/agents/task",
-            { content },
-            { signal: abortSignal }
-          );
+          const response = await fetch("/api/agents/task?stream=true", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "text/event-stream",
+            },
+            body: JSON.stringify({ content }),
+            signal: abortSignal,
+          });
 
-          // Invalidate task queries so newly created/modified tasks show up on dashboard immediately
-          queryClient.invalidateQueries({ queryKey: ["tasks"] });
-          queryClient.invalidateQueries({ queryKey: ["messages"] });
+          if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            const errorMsg =
+              errData.error || errData.message || `Request failed with status ${response.status}`;
+            toast.error(errorMsg);
+            yield {
+              content: [
+                {
+                  type: "text" as const,
+                  text: `⚠️ **Error**: ${errorMsg}`,
+                },
+              ],
+            };
+            return;
+          }
 
-          const outputText = res.data?.result || "Action executed successfully.";
+          const reader = response.body?.getReader();
+          if (!reader) {
+            yield {
+              content: [
+                {
+                  type: "text" as const,
+                  text: "Failed to connect to agent stream.",
+                },
+              ],
+            };
+            return;
+          }
 
-          return {
-            content: [
-              {
-                type: "text" as const,
-                text: outputText,
-              },
-            ],
-          };
+          const decoder = new TextDecoder();
+          let buffer = "";
+          let accumulatedText = "";
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const blocks = buffer.split("\n\n");
+            buffer = blocks.pop() || "";
+
+            for (const block of blocks) {
+              const lines = block.split("\n");
+              for (const line of lines) {
+                const trimmed = line.trim();
+                if (!trimmed.startsWith("data: ")) continue;
+
+                const jsonStr = trimmed.slice(6);
+                try {
+                  const event = JSON.parse(jsonStr);
+
+                  if (event.type === "chunk" && event.text) {
+                    accumulatedText += event.text;
+                    yield {
+                      content: [
+                        {
+                          type: "text" as const,
+                          text: accumulatedText,
+                        },
+                      ],
+                    };
+                  } else if (event.type === "tool_end" && event.isMutating) {
+                    // Event-driven React Query invalidation triggered by real tool mutations
+                    queryClient.invalidateQueries({ queryKey: ["tasks"] });
+                    queryClient.invalidateQueries({ queryKey: ["messages"] });
+                  } else if (event.type === "done") {
+                    if (event.fullText && event.fullText !== accumulatedText) {
+                      accumulatedText = event.fullText;
+                      yield {
+                        content: [
+                          {
+                            type: "text" as const,
+                            text: accumulatedText,
+                          },
+                        ],
+                      };
+                    }
+                  } else if (event.type === "error") {
+                    toast.error(event.error);
+                  }
+                } catch {
+                  // Ignore JSON parse errors for incomplete chunk frames
+                }
+              }
+            }
+          }
+
+          if (!accumulatedText.trim()) {
+            yield {
+              content: [
+                {
+                  type: "text" as const,
+                  text: "Action executed successfully.",
+                },
+              ],
+            };
+          }
         } catch (err: unknown) {
-          if (axios.isCancel(err)) {
-            return {
+          if (abortSignal.aborted) {
+            yield {
               content: [
                 {
                   type: "text" as const,
@@ -77,17 +163,14 @@ export function useTaskAgentRuntime(initialMessages: InitialChatMessage[] = []) 
                 },
               ],
             };
+            return;
           }
 
-          const axiosErr = err as AxiosError<{ error?: string; message?: string }>;
           const errorMsg =
-            axiosErr.response?.data?.error ||
-            axiosErr.response?.data?.message ||
-            (err instanceof Error ? err.message : "Failed to execute agent action");
-
+            err instanceof Error ? err.message : "Failed to execute agent action";
           toast.error(errorMsg);
 
-          return {
+          yield {
             content: [
               {
                 type: "text" as const,
