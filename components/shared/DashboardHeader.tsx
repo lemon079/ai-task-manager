@@ -4,13 +4,12 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Sparkles,
   ChevronRight,
   Menu,
-  PlusCircle,
   LayoutDashboard,
-  ListTodo,
+  CheckSquare,
   Settings,
+  Sparkles,
 } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import { Button } from "@/components/ui/button";
@@ -26,7 +25,7 @@ import useMedia from "use-media";
 
 const routeNames: Record<string, { title: string; icon: React.ElementType }> = {
   "/dashboard": { title: "Dashboard", icon: LayoutDashboard },
-  "/task-ai": { title: "Tasks AI", icon: ListTodo },
+  "/task-ai": { title: "Tasks", icon: CheckSquare },
   "/settings": { title: "Settings", icon: Settings },
 };
 
@@ -43,10 +42,10 @@ export default function DashboardHeader() {
   const CurrentIcon = currentRoute.icon;
 
   return (
-    <header className="sticky top-0 z-30 w-full border-b border-border/50 bg-background/80 backdrop-blur-md transition-colors">
-      <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-30 w-full border-b border-border bg-background select-none">
+      <div className="flex h-11 items-center justify-between px-4 sm:px-6">
         {/* Left: Mobile Drawer Trigger + Breadcrumb */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {/* Mobile Drawer */}
           <div className="flex md:hidden">
             <Drawer open={effectiveOpen} onOpenChange={setOpen} direction="left">
@@ -54,55 +53,52 @@ export default function DashboardHeader() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="size-9 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted"
+                  className="size-7 rounded-md text-muted-foreground hover:text-foreground"
                   aria-label="Open navigation menu"
                 >
-                  <Menu className="size-5" />
+                  <Menu className="size-4" />
                 </Button>
               </DrawerTrigger>
-              <DrawerContent className="!w-fit p-0 border-r border-border">
+              <DrawerContent className="!w-fit p-0 border-r border-border bg-sidebar">
                 <VisuallyHidden>
-                  <DrawerTitle>Mobile Navigation Menu</DrawerTitle>
+                  <DrawerTitle>Navigation</DrawerTitle>
                 </VisuallyHidden>
                 <Sidebar onLinkClick={() => setOpen(false)} />
               </DrawerContent>
             </Drawer>
           </div>
 
-          {/* Desktop Breadcrumbs */}
-          <nav aria-label="Breadcrumbs" className="flex items-center gap-2 text-sm">
+          {/* Breadcrumbs */}
+          <nav aria-label="Breadcrumbs" className="flex items-center gap-1.5 text-xs">
             <Link
               href="/"
-              className="hidden sm:inline-flex items-center gap-1.5 font-medium text-muted-foreground hover:text-foreground transition-colors"
+              className="text-muted-foreground hover:text-foreground transition-colors font-normal"
             >
               NeuraTask
             </Link>
-            <ChevronRight className="hidden sm:inline-block size-3.5 text-muted-foreground/60" />
-            <div className="flex items-center gap-2">
-              <span className="flex items-center gap-1.5 font-semibold text-foreground">
-                <CurrentIcon className="size-4 text-primary" />
-                {currentRoute.title}
-              </span>
-              <span className="hidden lg:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                AI Online
-              </span>
-            </div>
+            <ChevronRight className="size-3 text-muted-foreground/60" />
+            <span className="flex items-center gap-1.5 font-medium text-foreground">
+              <CurrentIcon className="size-3.5 text-muted-foreground" />
+              {currentRoute.title}
+            </span>
           </nav>
         </div>
 
         {/* Right: Quick Action & Theme Switcher */}
-        <div className="flex items-center gap-2.5">
-          <Link href="/task-ai">
-            <Button
-              size="sm"
-              className="h-9 px-3.5 rounded-xl font-medium gap-1.5 shadow-sm shadow-primary/20 bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-200 active:scale-95"
-            >
-              <Sparkles className="size-3.5" />
-              <span className="hidden xs:inline sm:inline">Ask AI</span>
-            </Button>
-          </Link>
-          <div className="hidden sm:block">
+        <div className="flex items-center gap-2">
+          {pathname !== "/task-ai" && (
+            <Link href="/task-ai">
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 px-2.5 rounded-md text-xs font-normal gap-1.5 text-muted-foreground hover:text-foreground hover:bg-muted/50 border-border"
+              >
+                <Sparkles className="size-3 text-primary" />
+                <span className="hidden sm:inline">Ask AI</span>
+              </Button>
+            </Link>
+          )}
+          <div className="md:hidden">
             <ThemeToggle />
           </div>
         </div>

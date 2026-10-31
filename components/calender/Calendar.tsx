@@ -16,30 +16,6 @@ function formatDateKey(d: Date | string): string {
   return `${year}-${month}-${day}`;
 }
 
-function getUrgencyInfo(dayTasks: Task[], today: Date): {
-  color: string;
-  ping: boolean;
-} {
-  if (dayTasks.length === 0) return { color: "bg-transparent", ping: false };
-
-  const nearestDiff = Math.min(
-    ...dayTasks.map((task) =>
-      task.dueDate
-        ? Math.ceil(
-            (new Date(task.dueDate).getTime() - today.getTime()) /
-              (1000 * 60 * 60 * 24)
-          )
-        : Infinity
-    )
-  );
-
-  if (nearestDiff < 0) return { color: "bg-rose-500", ping: true }; // overdue
-  if (nearestDiff === 0) return { color: "bg-amber-500", ping: true }; // today
-  if (nearestDiff <= 3) return { color: "bg-sky-500", ping: false }; // soon
-  if (nearestDiff <= 7) return { color: "bg-emerald-500", ping: false }; // next week
-  return { color: "bg-slate-400 dark:bg-slate-500", ping: false }; // distant
-}
-
 export function ScheduleCalendar({ tasks }: { tasks: Task[] }) {
   const today = useMemo(() => new Date(), []);
   const todayKey = useMemo(() => formatDateKey(today), [today]);
@@ -64,27 +40,25 @@ export function ScheduleCalendar({ tasks }: { tasks: Task[] }) {
       <div className="w-full overflow-x-auto">
         <Calendar
           mode="single"
-          className="rounded-xl border border-border/70 shadow-2xs mt-4 size-full bg-card/40"
+          className="rounded-md border border-border/80 p-3 size-full bg-card"
           components={{
             DayButton: ({ day, ...props }) => {
               const key = formatDateKey(day.date);
               const dayTasks = tasksByDate.get(key) ?? [];
-              const { color: urgencyColor, ping } = getUrgencyInfo(dayTasks, today);
               const isTodayCell = key === todayKey;
+              const hasTasks = dayTasks.length > 0;
 
               return (
                 <button
                   {...props}
                   className={cn(
-                    "relative flex flex-col items-start justify-start border text-left",
-                    "size-full min-h-[76px] sm:min-h-[84px] p-2 transition-all duration-200 cursor-pointer rounded-xl group",
-                    dayTasks.length > 0
-                      ? "border-primary/40 bg-primary/5 hover:bg-primary/10"
-                      : "border-border/50 hover:bg-muted/40",
-                    isTodayCell && "ring-1.5 ring-primary/60 font-semibold"
+                    "relative flex flex-col items-center justify-center border text-center",
+                    "size-full min-h-[58px] sm:min-h-[64px] p-1.5 transition-colors cursor-pointer rounded-md",
+                    "border-border/40 hover:bg-muted/50 hover:border-border",
+                    isTodayCell && "bg-muted/40 font-semibold text-foreground ring-1 ring-primary/40"
                   )}
                   onClick={() => {
-                    if (dayTasks.length === 0) return;
+                    if (!hasTasks) return;
                     setSelectedTasks(dayTasks);
                     setSelectedDate(
                       day.date.toLocaleDateString(undefined, {
@@ -97,45 +71,24 @@ export function ScheduleCalendar({ tasks }: { tasks: Task[] }) {
                     setModalOpen(true);
                   }}
                 >
-                  <div className="flex items-center justify-between w-full">
-                    <span
-                      className={cn(
-                        "text-xs font-semibold tabular-nums",
-                        isTodayCell
-                          ? "text-primary font-bold"
-                          : "text-foreground group-hover:text-primary transition-colors"
-                      )}
-                    >
-                      {day.date.getDate()}
-                    </span>
-
-                    {/* Urgency Badge Indicator */}
-                    {dayTasks.length > 0 && (
-                      <span className="relative flex size-2">
-                        {ping && (
-                          <span
-                            className={cn(
-                              "absolute inline-flex h-full w-full rounded-full opacity-75 animate-ping",
-                              urgencyColor
-                            )}
-                          />
-                        )}
-                        <span
-                          className={cn(
-                            "relative inline-flex size-2 rounded-full",
-                            urgencyColor
-                          )}
-                        />
-                      </span>
+                  <span
+                    className={cn(
+                      "text-xs tabular-nums",
+                      isTodayCell ? "text-primary font-semibold" : "text-foreground"
                     )}
-                  </div>
+                  >
+                    {day.date.getDate()}
+                  </span>
 
-                  {/* Task Count Pill */}
-                  {dayTasks.length > 0 && (
-                    <div className="mt-auto pt-1 w-full">
-                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20 truncate max-w-full">
-                        {dayTasks.length} {dayTasks.length > 1 ? "tasks" : "task"}
-                      </span>
+                  {/* Small minimal task dots indicator */}
+                  {hasTasks && (
+                    <div className="flex items-center gap-0.5 mt-1">
+                      <span className="size-1 rounded-full bg-primary shrink-0" />
+                      {dayTasks.length > 1 && (
+                        <span className="text-[10px] text-muted-foreground font-medium tabular-nums leading-none">
+                          +{dayTasks.length - 1}
+                        </span>
+                      )}
                     </div>
                   )}
                 </button>
@@ -147,7 +100,7 @@ export function ScheduleCalendar({ tasks }: { tasks: Task[] }) {
 
       <ResponsiveDialog
         title={`Tasks on ${selectedDate}`}
-        description={`Scheduled tasks for this day (${selectedTasks.length} total)`}
+        description={`${selectedTasks.length} scheduled task${selectedTasks.length > 1 ? "s" : ""}`}
       >
         <TaskTable tasks={selectedTasks} />
       </ResponsiveDialog>

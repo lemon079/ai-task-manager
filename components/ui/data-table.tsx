@@ -19,18 +19,18 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
-  isDashboard?: boolean
+  isDashboard?: boolean;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
-  isDashboard
+  isDashboard,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
 
@@ -44,19 +44,19 @@ export function DataTable<TData, TValue>({
     getPaginationRowModel: getPaginationRowModel(),
     initialState: {
       pagination: {
-        pageSize: 5, // 👈 Show 5 rows per page
+        pageSize: 6,
       },
     },
   });
 
   return (
-    <div className="rounded-md border">
+    <div className="rounded-md border border-border/80 bg-card overflow-hidden">
       <Table>
-        <TableHeader>
+        <TableHeader className="bg-muted/30">
           {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id}>
+            <TableRow key={headerGroup.id} className="border-b border-border/80 hover:bg-transparent">
               {headerGroup.headers.map((header) => (
-                <TableHead key={header.id}>
+                <TableHead key={header.id} className="h-9 px-3 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
                   {header.isPlaceholder
                     ? null
                     : flexRender(header.column.columnDef.header, header.getContext())}
@@ -66,12 +66,15 @@ export function DataTable<TData, TValue>({
           ))}
         </TableHeader>
 
-        <TableBody>
+        <TableBody className="divide-y divide-border/60">
           {table.getRowModel().rows.length ? (
             table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
+              <TableRow
+                key={row.id}
+                className="group h-10 hover:bg-muted/40 transition-colors border-0"
+              >
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
+                  <TableCell key={cell.id} className="px-3 py-2 text-xs">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
                 ))}
@@ -79,42 +82,44 @@ export function DataTable<TData, TValue>({
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
-                No goals
+              <TableCell colSpan={columns.length} className="h-24 text-center text-xs text-muted-foreground">
+                No tasks found
               </TableCell>
             </TableRow>
           )}
         </TableBody>
       </Table>
 
-      {/* 👇 Pagination Controls */}
-      {isDashboard &&
-        <div className="flex items-center justify-between px-4 py-2">
-          <div className="text-sm text-muted-foreground">
-            {table.getState().pagination.pageIndex + 1} of{" "}
-            {table.getPageCount()}
+      {/* Pagination Controls */}
+      {isDashboard && table.getPageCount() > 1 && (
+        <div className="flex items-center justify-between px-3 py-2 border-t border-border/60 bg-card">
+          <div className="text-[11px] text-muted-foreground tabular-nums">
+            Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
           </div>
-          <div className="space-x-2">
+          <div className="flex items-center gap-1">
             <Button
-              variant="secondary"
-              size="sm"
+              variant="ghost"
+              size="icon"
+              className="size-7 rounded-md text-muted-foreground hover:text-foreground"
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
+              aria-label="Previous page"
             >
-              <ArrowLeft />
+              <ChevronLeft className="size-3.5" />
             </Button>
             <Button
-              variant="secondary"
-              size="sm"
+              variant="ghost"
+              size="icon"
+              className="size-7 rounded-md text-muted-foreground hover:text-foreground"
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
+              aria-label="Next page"
             >
-              <ArrowRight />
+              <ChevronRight className="size-3.5" />
             </Button>
           </div>
         </div>
-      }
-
+      )}
     </div>
   );
 }

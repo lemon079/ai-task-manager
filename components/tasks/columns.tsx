@@ -19,57 +19,28 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 
-const priorityConfig: Record<
-  string,
-  { bg: string; text: string; border: string; dot: string }
-> = {
-  high: {
-    bg: "bg-rose-500/10",
-    text: "text-rose-700 dark:text-rose-300",
-    border: "border-rose-500/25",
-    dot: "bg-rose-500",
-  },
-  medium: {
-    bg: "bg-amber-500/10",
-    text: "text-amber-700 dark:text-amber-300",
-    border: "border-amber-500/25",
-    dot: "bg-amber-500",
-  },
-  low: {
-    bg: "bg-emerald-500/10",
-    text: "text-emerald-700 dark:text-emerald-300",
-    border: "border-emerald-500/25",
-    dot: "bg-emerald-500",
-  },
+const priorityConfig: Record<string, { dot: string; label: string }> = {
+  high: { dot: "bg-rose-500", label: "High" },
+  medium: { dot: "bg-amber-500", label: "Medium" },
+  low: { dot: "bg-emerald-500", label: "Low" },
 };
 
-const statusConfig: Record<
-  string,
-  { bg: string; text: string; border: string; dot: string }
-> = {
+const statusConfig: Record<string, { label: string; className: string }> = {
   pending: {
-    bg: "bg-slate-500/10",
-    text: "text-slate-700 dark:text-slate-300",
-    border: "border-slate-500/25",
-    dot: "bg-slate-400",
+    label: "Pending",
+    className: "bg-muted text-muted-foreground",
   },
   in_progress: {
-    bg: "bg-sky-500/10",
-    text: "text-sky-700 dark:text-sky-300",
-    border: "border-sky-500/25",
-    dot: "bg-sky-500",
+    label: "In Progress",
+    className: "bg-primary/10 text-primary",
   },
   completed: {
-    bg: "bg-emerald-500/10",
-    text: "text-emerald-700 dark:text-emerald-300",
-    border: "border-emerald-500/25",
-    dot: "bg-emerald-500",
+    label: "Completed",
+    className: "bg-muted text-muted-foreground",
   },
   over_due: {
-    bg: "bg-rose-500/10",
-    text: "text-rose-700 dark:text-rose-300",
-    border: "border-rose-500/25",
-    dot: "bg-rose-500",
+    label: "Overdue",
+    className: "bg-rose-500/10 text-rose-600 dark:text-rose-400",
   },
 };
 
@@ -86,11 +57,11 @@ function StatusCheckbox({ task }: { task: Task }) {
         status: nextStatus,
         userId: task.userId,
       });
-      toast.success(isCompleted ? "Task marked pending" : "Task completed!");
+      toast.success(isCompleted ? "Marked as pending" : "Task completed");
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       router.refresh();
     } catch {
-      toast.error("Failed to update task status");
+      toast.error("Failed to update status");
     }
   };
 
@@ -98,7 +69,7 @@ function StatusCheckbox({ task }: { task: Task }) {
     <Checkbox
       checked={isCompleted}
       onCheckedChange={handleToggle}
-      className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600 rounded-md cursor-pointer transition-colors"
+      className="size-4 rounded border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary transition-colors cursor-pointer"
       aria-label="Mark as complete"
     />
   );
@@ -117,11 +88,11 @@ function TaskActions({ task }: { task: Task }) {
         status: nextStatus,
         userId: task.userId,
       });
-      toast.success(isCompleted ? "Task marked pending" : "Task marked complete!");
+      toast.success(isCompleted ? "Marked as pending" : "Task completed");
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       router.refresh();
     } catch {
-      toast.error("Failed to update task status");
+      toast.error("Failed to update status");
     }
   };
 
@@ -137,37 +108,39 @@ function TaskActions({ task }: { task: Task }) {
   };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="size-8 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
-        >
-          <MoreHorizontal className="size-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-44 rounded-xl p-1.5 shadow-lg">
-        <DropdownMenuItem
-          className="cursor-pointer rounded-lg text-xs font-medium"
-          onClick={handleToggleComplete}
-        >
-          <CheckCircle2 className="mr-2 size-4 text-emerald-600 dark:text-emerald-400" />
-          {isCompleted ? "Mark Pending" : "Mark Complete"}
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          className="cursor-pointer rounded-lg text-xs font-medium text-destructive focus:text-destructive focus:bg-destructive/10"
-          onClick={handleDelete}
-        >
-          <Trash2 className="mr-2 size-4" /> Delete Task
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <div className="flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-7 rounded-md text-muted-foreground hover:text-foreground cursor-pointer"
+          >
+            <MoreHorizontal className="size-3.5" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-36 rounded-md p-1 shadow-sm border-border text-xs">
+          <DropdownMenuItem
+            className="cursor-pointer text-xs"
+            onClick={handleToggleComplete}
+          >
+            <CheckCircle2 className="mr-2 size-3.5 text-muted-foreground" />
+            {isCompleted ? "Mark pending" : "Mark complete"}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="cursor-pointer text-xs text-destructive focus:text-destructive"
+            onClick={handleDelete}
+          >
+            <Trash2 className="mr-2 size-3.5" /> Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   );
 }
 
 export const columns: ColumnDef<Task>[] = [
-  // Status Checkbox Column
+  // Checkbox
   {
     id: "select",
     header: () => <span className="sr-only">Status</span>,
@@ -176,10 +149,10 @@ export const columns: ColumnDef<Task>[] = [
     enableHiding: false,
   },
 
-  // Task Name Column
+  // Task Name
   {
     accessorKey: "title",
-    header: "Task Name",
+    header: "Task",
     cell: ({ row }) => {
       const title = row.getValue("title") as string;
       const isCompleted = row.original.status === "completed";
@@ -187,18 +160,18 @@ export const columns: ColumnDef<Task>[] = [
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div
+              <span
                 className={cn(
-                  "max-w-[220px] sm:max-w-xs truncate font-medium text-sm transition-colors",
+                  "max-w-[200px] sm:max-w-xs truncate text-xs font-normal block",
                   isCompleted
                     ? "line-through text-muted-foreground/60"
                     : "text-foreground"
                 )}
               >
                 {title}
-              </div>
+              </span>
             </TooltipTrigger>
-            <TooltipContent className="rounded-lg text-xs">
+            <TooltipContent className="rounded-md text-xs py-1 px-2">
               <p>{title}</p>
             </TooltipContent>
           </Tooltip>
@@ -207,7 +180,7 @@ export const columns: ColumnDef<Task>[] = [
     },
   },
 
-  // Priority Badge Column
+  // Priority
   {
     accessorKey: "priority",
     header: ({ column }) => (
@@ -215,38 +188,25 @@ export const columns: ColumnDef<Task>[] = [
         variant="ghost"
         size="sm"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="cursor-pointer -ml-3 text-xs font-semibold text-muted-foreground hover:text-foreground"
+        className="cursor-pointer -ml-2 h-7 px-2 text-[11px] font-medium text-muted-foreground hover:text-foreground"
       >
-        Priority <ArrowUpDown className="ml-1 size-3.5" />
+        Priority <ArrowUpDown className="ml-1 size-3 text-muted-foreground/60" />
       </Button>
     ),
     cell: ({ row }) => {
       const priority = (row.getValue("priority") as string).toLowerCase();
-      const config =
-        priorityConfig[priority] || {
-          bg: "bg-slate-500/10",
-          text: "text-slate-700 dark:text-slate-300",
-          border: "border-slate-500/20",
-          dot: "bg-slate-400",
-        };
+      const config = priorityConfig[priority] || { dot: "bg-muted-foreground", label: priority };
 
       return (
-        <span
-          className={cn(
-            "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border",
-            config.bg,
-            config.text,
-            config.border
-          )}
-        >
-          <span className={cn("size-1.5 rounded-full", config.dot)} />
-          {priority.charAt(0).toUpperCase() + priority.slice(1)}
-        </span>
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <span className={cn("size-1.5 rounded-full shrink-0", config.dot)} />
+          <span>{config.label}</span>
+        </div>
       );
     },
   },
 
-  // Status Column
+  // Status
   {
     accessorKey: "status",
     header: ({ column }) => (
@@ -254,39 +214,32 @@ export const columns: ColumnDef<Task>[] = [
         variant="ghost"
         size="sm"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="cursor-pointer -ml-3 text-xs font-semibold text-muted-foreground hover:text-foreground"
+        className="cursor-pointer -ml-2 h-7 px-2 text-[11px] font-medium text-muted-foreground hover:text-foreground"
       >
-        Status <ArrowUpDown className="ml-1 size-3.5" />
+        Status <ArrowUpDown className="ml-1 size-3 text-muted-foreground/60" />
       </Button>
     ),
     cell: ({ row }) => {
       const status = row.getValue("status") as string;
-      const config =
-        statusConfig[status] || {
-          bg: "bg-slate-500/10",
-          text: "text-slate-700 dark:text-slate-300",
-          border: "border-slate-500/20",
-          dot: "bg-slate-400",
-        };
-      const label = status.replace("_", " ");
+      const config = statusConfig[status] || {
+        label: status.replace("_", " "),
+        className: "bg-muted text-muted-foreground",
+      };
 
       return (
         <span
           className={cn(
-            "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border capitalize",
-            config.bg,
-            config.text,
-            config.border
+            "inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium",
+            config.className
           )}
         >
-          <span className={cn("size-1.5 rounded-full", config.dot)} />
-          {label}
+          {config.label}
         </span>
       );
     },
   },
 
-  // Due Date Column
+  // Due Date
   {
     accessorKey: "dueDate",
     header: ({ column }) => (
@@ -294,9 +247,9 @@ export const columns: ColumnDef<Task>[] = [
         variant="ghost"
         size="sm"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="cursor-pointer -ml-3 text-xs font-semibold text-muted-foreground hover:text-foreground"
+        className="cursor-pointer -ml-2 h-7 px-2 text-[11px] font-medium text-muted-foreground hover:text-foreground"
       >
-        Due Date <ArrowUpDown className="ml-1 size-3.5" />
+        Due Date <ArrowUpDown className="ml-1 size-3 text-muted-foreground/60" />
       </Button>
     ),
     cell: ({ row }) => {
@@ -304,23 +257,21 @@ export const columns: ColumnDef<Task>[] = [
       if (!dueDateValue) return <span className="text-muted-foreground text-xs">—</span>;
 
       const dueDate = new Date(dueDateValue);
-      const formatted = format(dueDate, "MMM dd, yyyy");
+      const formatted = format(dueDate, "MMM d, yyyy");
       const now = new Date();
 
       let colorClass = "text-muted-foreground";
       if (isBefore(dueDate, now) && !isToday(dueDate)) {
-        colorClass = "text-rose-600 dark:text-rose-400 font-semibold";
+        colorClass = "text-rose-600 dark:text-rose-400 font-medium";
       } else if (isToday(dueDate)) {
-        colorClass = "text-amber-600 dark:text-amber-400 font-semibold";
-      } else {
-        colorClass = "text-emerald-600 dark:text-emerald-400 font-medium";
+        colorClass = "text-amber-600 dark:text-amber-400 font-medium";
       }
 
-      return <span className={cn("text-xs font-medium tabular-nums", colorClass)}>{formatted}</span>;
+      return <span className={cn("text-xs tabular-nums", colorClass)}>{formatted}</span>;
     },
   },
 
-  // Actions Column
+  // Actions (Revealed on row hover)
   {
     id: "actions",
     header: () => <span className="sr-only">Actions</span>,
