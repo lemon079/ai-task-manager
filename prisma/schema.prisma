@@ -73,9 +73,12 @@ model Task {
   priority         Priority  @default(medium)
   status           Status    @default(pending)
   dueDate          DateTime?
+  dueTime          String?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
   deadlineNotified Boolean   @default(false)
+  indexedAt        DateTime?
+  indexPending     Boolean   @default(false)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -83,12 +86,18 @@ model Task {
   @@index([userId, dueDate])
   @@index([status])
   @@index([priority])
+  @@index([indexPending])
 }
 
 model Message {
   id        Int      @id @default(autoincrement())
   chatId    String
+  userId    String?
   role      String
   content   String
+  metadata  Json?
   createdAt DateTime @default(now())
+
+  @@index([chatId])
+  @@index([userId])
 }
