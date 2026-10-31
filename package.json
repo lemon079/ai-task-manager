@@ -13,6 +13,8 @@
     "migrate:deploy": "prisma migrate deploy"
   },
   "dependencies": {
+    "@assistant-ui/react": "^0.15.32",
+    "@assistant-ui/react-markdown": "^0.14.24",
     "@auth/prisma-adapter": "^2.10.0",
     "@hookform/resolvers": "^5.2.1",
     "@langchain/community": "^0.3.53",
