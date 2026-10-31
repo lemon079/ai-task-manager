@@ -55,7 +55,6 @@ function StatusCheckbox({ task }: { task: Task }) {
       await updateTask({
         id: task.id,
         status: nextStatus,
-        userId: task.userId,
       });
       toast.success(isCompleted ? "Marked as pending" : "Task completed");
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
@@ -86,7 +85,6 @@ function TaskActions({ task }: { task: Task }) {
       await updateTask({
         id: task.id,
         status: nextStatus,
-        userId: task.userId,
       });
       toast.success(isCompleted ? "Marked as pending" : "Task completed");
       queryClient.invalidateQueries({ queryKey: ["tasks"] });

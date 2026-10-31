@@ -105,12 +105,10 @@ async function getTasksForUser(userId: string) {
   }
 }
 
-// -------------------- CREATE TASK --------------------
 async function createTask(args: z.infer<typeof createTaskSchema>) {
   const session = await auth();
   const sessionUserId = session?.user?.id;
-  const effectiveUserId = sessionUserId || args.userId;
-  if (!effectiveUserId) throw new Error("Unauthorized");
+  if (!sessionUserId) throw new Error("Unauthorized");
 
   const { title, description, priority, dueDate } = args;
   const parsedDate = dueDate ? new Date(dueDate) : null;
@@ -119,7 +117,7 @@ async function createTask(args: z.infer<typeof createTaskSchema>) {
     data: {
       title,
       description,
-      userId: effectiveUserId,
+      userId: sessionUserId,
       priority: (priority as any) || "medium",
       dueDate: parsedDate,
       status: "pending",
@@ -127,7 +125,7 @@ async function createTask(args: z.infer<typeof createTaskSchema>) {
   });
 
   try {
-    await createTaskEmbedding(task);
+    await createTaskEmbedding(task, sessionUserId);
   } catch (err) {
     console.warn("Embedding index skipped or failed:", err);
   }
@@ -140,14 +138,13 @@ async function createTask(args: z.infer<typeof createTaskSchema>) {
 async function updateTask(args: z.infer<typeof updateTaskSchema>) {
   const session = await auth();
   const sessionUserId = session?.user?.id;
-  const effectiveUserId = sessionUserId || args.userId;
-  if (!effectiveUserId) throw new Error("Unauthorized");
+  if (!sessionUserId) throw new Error("Unauthorized");
 
   const { newTitle, id, title, description, priority, status, dueDate } = args;
 
   if (id) {
     const existing = await prisma.task.findUnique({ where: { id } });
-    if (!existing || existing.userId !== effectiveUserId) {
+    if (!existing || existing.userId !== sessionUserId) {
       throw new Error("Task not found or unauthorized");
     }
 
@@ -163,7 +160,7 @@ async function updateTask(args: z.infer<typeof updateTaskSchema>) {
     });
 
     try {
-      await updateTaskEmbedding(updated);
+      await updateTaskEmbedding(updated, sessionUserId);
     } catch (err) {
       console.warn("Embedding update skipped or failed:", err);
     }
@@ -176,7 +173,7 @@ async function updateTask(args: z.infer<typeof updateTaskSchema>) {
     const matches = await prisma.task.findMany({
       where: {
         title: { contains: title, mode: "insensitive" },
-        userId: effectiveUserId,
+        userId: sessionUserId,
       },
     });
 
@@ -202,7 +199,7 @@ async function updateTask(args: z.infer<typeof updateTaskSchema>) {
     });
 
     try {
-      await updateTaskEmbedding(updated);
+      await updateTaskEmbedding(updated, sessionUserId);
     } catch (err) {
       console.warn("Embedding update skipped or failed:", err);
     }
@@ -228,7 +225,7 @@ async function deleteTask(args: { id: string }) {
   const deleted = await prisma.task.delete({ where: { id: args.id } });
 
   try {
-    await deleteTaskEmbedding(args.id);
+    await deleteTaskEmbedding(args.id, sessionUserId);
   } catch (err) {
     console.warn("Embedding delete skipped or failed:", err);
   }
