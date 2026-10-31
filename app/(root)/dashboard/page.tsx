@@ -101,13 +101,14 @@ export default async function DashboardPage() {
                       }`}
                     />
                     <span
-                      className={`text-xs truncate ${
+                      data-completed={isDone ? "true" : "false"}
+                      className={`strikethrough-line text-xs truncate transition-colors duration-300 ${
                         isDone
-                          ? "line-through text-muted-foreground"
+                          ? "text-muted-foreground/60"
                           : "text-foreground"
                       }`}
                     >
-                      {task.title}
+                      <span className="truncate">{task.title}</span>
                     </span>
                   </div>
 

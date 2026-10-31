@@ -50,8 +50,15 @@ function StatusCheckbox({ task }: { task: Task }) {
   const router = useRouter();
 
   const handleToggle = async () => {
+    const nextStatus = isCompleted ? "pending" : "completed";
+
+    // Instant optimistic update for immediate checkbox and strikethrough animation
+    queryClient.setQueriesData<Task[]>({ queryKey: ["tasks"] }, (old) => {
+      if (!old) return old;
+      return old.map((t) => (t.id === task.id ? { ...t, status: nextStatus } : t));
+    });
+
     try {
-      const nextStatus = isCompleted ? "pending" : "completed";
       await updateTask({
         id: task.id,
         status: nextStatus,
@@ -61,6 +68,7 @@ function StatusCheckbox({ task }: { task: Task }) {
       router.refresh();
     } catch {
       toast.error("Failed to update status");
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
     }
   };
 
@@ -80,8 +88,15 @@ function TaskActions({ task }: { task: Task }) {
   const router = useRouter();
 
   const handleToggleComplete = async () => {
+    const nextStatus = isCompleted ? "pending" : "completed";
+
+    // Instant optimistic update
+    queryClient.setQueriesData<Task[]>({ queryKey: ["tasks"] }, (old) => {
+      if (!old) return old;
+      return old.map((t) => (t.id === task.id ? { ...t, status: nextStatus } : t));
+    });
+
     try {
-      const nextStatus = isCompleted ? "pending" : "completed";
       await updateTask({
         id: task.id,
         status: nextStatus,
@@ -91,6 +106,7 @@ function TaskActions({ task }: { task: Task }) {
       router.refresh();
     } catch {
       toast.error("Failed to update status");
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
     }
   };
 
@@ -159,14 +175,15 @@ export const columns: ColumnDef<Task>[] = [
           <Tooltip>
             <TooltipTrigger asChild>
               <span
+                data-completed={isCompleted ? "true" : "false"}
                 className={cn(
-                  "max-w-[200px] sm:max-w-xs truncate text-xs font-normal block",
+                  "strikethrough-line max-w-[200px] sm:max-w-xs truncate text-xs font-normal transition-colors duration-300",
                   isCompleted
-                    ? "line-through text-muted-foreground/60"
+                    ? "text-muted-foreground/60"
                     : "text-foreground"
                 )}
               >
-                {title}
+                <span className="truncate">{title}</span>
               </span>
             </TooltipTrigger>
             <TooltipContent className="rounded-md text-xs py-1 px-2">
