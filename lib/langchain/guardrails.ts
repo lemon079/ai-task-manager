@@ -81,29 +81,9 @@ export function sanitizeOutput(output: string): string {
 }
 
 /**
- * Validates agent output
- */
-export function validateOutput(output: string): GuardrailResult {
-  if (!output || output.trim().length === 0) {
-    return { passed: false, message: "No response generated." };
-  }
-  return { passed: true, message: "Output validated" };
-}
-
-/**
  * Combined guardrail check for input
  */
 export function applyInputGuardrails(input: string): GuardrailResult {
   return validateInput(input);
 }
 
-/**
- * Combined guardrail check for output
- */
-export function applyOutputGuardrails(output: string): string {
-  const validation = validateOutput(output);
-  if (!validation.passed) {
-    return validation.message;
-  }
-  return sanitizeOutput(output);
-}

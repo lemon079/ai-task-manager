@@ -12,7 +12,6 @@ export async function initializeAgent({
   prompt: ChatPromptTemplate;
   tools: (Tool | StructuredTool)[];
 }) {
-  
   const agent = createToolCallingAgent({
     llm,
     tools,
@@ -24,6 +23,11 @@ export async function initializeAgent({
     tools,
     maxIterations: 6,
     returnIntermediateSteps: false,
+    // Enable error self-correction so schema/parsing errors are returned to the agent to retry
+    handleParsingErrors: (error: any) => {
+      const msg = error?.message || String(error);
+      return `Tool execution / schema error: ${msg}. Please review the tool parameters, verify format constraints (such as YYYY-MM-DD for dates), and try again.`;
+    },
   });
 
   return agentExecutor;

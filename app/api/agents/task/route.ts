@@ -5,6 +5,8 @@ import { checkRateLimit, checkDailyBudget, getRateLimitHeaders, RATE_LIMITS } fr
 import { applyInputGuardrails, sanitizeOutput } from "@/lib/langchain/guardrails";
 import { getTaskAgentForUser } from "@/lib/langchain/memory/task";
 import { getRecentlyTouchedTasksContext, PrismaChatMessageHistory } from "@/lib/langchain/memory/prisma-chat-message";
+import { classifyError } from "@/lib/langchain/resilience/error-classifier";
+import { circuitBreaker } from "@/lib/langchain/resilience/circuit-breaker";
 import { DateTime } from "luxon";
 import { z } from "zod";
 
@@ -206,6 +208,9 @@ export async function POST(req: NextRequest) {
             await history.addAIChatMessage(sanitizeOutput(fullOutput));
           }
 
+          // Record success for circuit breaker
+          circuitBreaker.recordSuccess("gemini-primary");
+
           sendEvent({ type: "done", fullText: sanitizeOutput(fullOutput) });
           controller.close();
         } catch (streamErr: any) {
@@ -213,7 +218,21 @@ export async function POST(req: NextRequest) {
             sendEvent({ type: "aborted" });
           } else {
             console.error("Streaming error in task agent:", streamErr?.message);
-            sendEvent({ type: "error", error: "An error occurred while generating the response." });
+            const classified = classifyError(streamErr);
+            circuitBreaker.recordFailure("gemini-primary", classified.category === "QUOTA_EXHAUSTED");
+
+            let userSafeMessage = "An error occurred while generating the response. Please try again.";
+            if (classified.category === "QUOTA_EXHAUSTED") {
+              userSafeMessage = "The AI assistant is temporarily operating at capacity (daily token quota reached). Your tasks are safe and accessible in the task table below. You can continue managing your tasks manually or try again once tokens refresh.";
+            } else if (classified.category === "TRANSIENT") {
+              userSafeMessage = "Temporary connectivity issue with the AI service. Please retry in a moment.";
+            }
+
+            sendEvent({
+              type: "error",
+              error: userSafeMessage,
+              category: classified.category,
+            });
           }
           controller.close();
         }
@@ -229,8 +248,19 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    console.error("❌ Error in POST /api/agents/task:", errorMessage);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    const classified = classifyError(error);
+    circuitBreaker.recordFailure("gemini-primary", classified.category === "QUOTA_EXHAUSTED");
+
+    let message = "Internal Server Error";
+    if (classified.category === "QUOTA_EXHAUSTED") {
+      message = "Daily token quota reached for AI model. You can still manage your tasks directly in the dashboard.";
+    } else if (classified.category === "TRANSIENT") {
+      message = "Temporary AI provider outage. Please retry in a moment.";
+    }
+
+    return NextResponse.json(
+      { error: message, category: classified.category },
+      { status: classified.statusCode || 500 }
+    );
   }
 }

@@ -118,16 +118,6 @@ export function checkDailyBudget(userId: string): { allowed: boolean; remainingR
 }
 
 /**
- * Record token usage for a user
- */
-export function recordTokenUsage(userId: string, tokens: number): void {
-  const userRecord = dailyBudgetStore.get(userId);
-  if (userRecord) {
-    userRecord.tokens += tokens;
-  }
-}
-
-/**
  * Create rate limit headers for HTTP response
  */
 export function getRateLimitHeaders(result: RateLimitResult): Record<string, string> {

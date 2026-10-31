@@ -135,6 +135,17 @@ export function useTaskAgentRuntime(initialMessages: InitialChatMessage[] = []) 
                     }
                   } else if (event.type === "error") {
                     toast.error(event.error);
+                    if (!accumulatedText.trim()) {
+                      accumulatedText = `⚠️ ${event.error}`;
+                      yield {
+                        content: [
+                          {
+                            type: "text" as const,
+                            text: accumulatedText,
+                          },
+                        ],
+                      };
+                    }
                   }
                 } catch {
                   // Ignore JSON parse errors for incomplete chunk frames

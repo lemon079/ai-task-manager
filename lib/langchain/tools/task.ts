@@ -87,16 +87,25 @@ export function createTaskTools(userId: string) {
       }
 
       // 3. Create task in Postgres scoped by userId
-      const task = await prisma.task.create({
-        data: {
-          title,
-          description: description || null,
-          userId,
-          priority: priority ?? "medium",
-          dueDate: parsedDate,
-          status: "pending",
-        },
-      });
+      let task;
+      try {
+        task = await prisma.task.create({
+          data: {
+            title,
+            description: description || null,
+            userId,
+            priority: priority ?? "medium",
+            dueDate: parsedDate,
+            status: "pending",
+          },
+        });
+      } catch (dbErr: any) {
+        return JSON.stringify({
+          success: false,
+          action: "create",
+          error: `Database error while creating task: ${dbErr?.message || "Internal database failure"}. Please check inputs and retry.`,
+        });
+      }
 
       // 4. Audit mutation and index embedding in tenant-isolated Pinecone namespace
       logger.auditMutation({
@@ -157,11 +166,16 @@ export function createTaskTools(userId: string) {
         where.dueDate = { gte: from, lte: to };
       }
 
-      const tasks = await prisma.task.findMany({
-        where,
-        orderBy: { createdAt: "desc" },
-        take: 20,
-      });
+      let tasks;
+      try {
+        tasks = await prisma.task.findMany({
+          where,
+          orderBy: { createdAt: "desc" },
+          take: 20,
+        });
+      } catch (dbErr: any) {
+        return `Database query error: ${dbErr?.message || "Failed to retrieve tasks"}. Please retry with simplified filters.`;
+      }
 
       if (!tasks.length) {
         return "No tasks found matching the criteria.";
@@ -254,16 +268,25 @@ export function createTaskTools(userId: string) {
         }
       }
 
-      const updatedTask = await prisma.task.update({
-        where: { id: targetTask.id },
-        data: {
-          ...(newTitle && { title: newTitle }),
-          ...(description !== undefined && { description }),
-          ...(priority && { priority }),
-          ...(status && { status }),
-          ...(parsedDueDate !== undefined && { dueDate: parsedDueDate }),
-        },
-      });
+      let updatedTask;
+      try {
+        updatedTask = await prisma.task.update({
+          where: { id: targetTask.id },
+          data: {
+            ...(newTitle && { title: newTitle }),
+            ...(description !== undefined && { description }),
+            ...(priority && { priority }),
+            ...(status && { status }),
+            ...(parsedDueDate !== undefined && { dueDate: parsedDueDate }),
+          },
+        });
+      } catch (dbErr: any) {
+        return JSON.stringify({
+          success: false,
+          action: "update",
+          error: `Database error while updating task: ${dbErr?.message || "Internal update failure"}.`,
+        });
+      }
 
       // 4. Audit mutation and synchronize vector embedding in tenant namespace
       logger.auditMutation({
@@ -405,9 +428,17 @@ export function createTaskTools(userId: string) {
       }
 
       // 6. Delete strictly scoped by task ID
-      await prisma.task.delete({
-        where: { id: taskToDelete.id },
-      });
+      try {
+        await prisma.task.delete({
+          where: { id: taskToDelete.id },
+        });
+      } catch (dbErr: any) {
+        return JSON.stringify({
+          success: false,
+          action: "delete",
+          error: `Database error while deleting task: ${dbErr?.message || "Internal deletion failure"}.`,
+        });
+      }
 
       // 7. Audit mutation and remove vector embedding from user namespace
       logger.auditMutation({
