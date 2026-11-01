@@ -36,7 +36,7 @@ flowchart TD
         subgraph ProdEnv["🚀 Production Environment"]
             VercelProdBuild["Vercel Production Build (Auto-triggered by merge into main)"]
             ProdEnvs["Production Environment Variables (Sensitive Secrets)"]
-            ProdDomain["🌐 Canonical Production URL: ai-task-manager-112-mu.vercel.app"]
+            ProdDomain["🌐 Canonical Production URL: ai-task-manager-112.vercel.app"]
 
             VercelProdBuild --> ProdEnvs
             ProdEnvs --> ProdDomain
@@ -68,7 +68,7 @@ flowchart TD
 | **Git Branch** | `develop` | `main` |
 | **Vercel Target** | **Preview** | **Production** |
 | **Deployment Trigger** | Automatic on every `git push origin develop` | Automatic on PR merge into `main` |
-| **Public URL** | `https://ai-task-manager-112-*.vercel.app` | `https://ai-task-manager-112-mu.vercel.app` |
+| **Public URL** | `https://ai-task-manager-112-*.vercel.app` | `https://ai-task-manager-112.vercel.app` |
 | **Purpose** | Verification, testing new features, mobile PWA testing | Live end-users, installed desktop/mobile PWAs |
 | **Environment Variables** | Configured for **Preview** environment | Configured for **Production** environment |
 | **Safety Net** | Safe to break, iterate, test migrations and edge cases | Strictly guarded; zero breaking changes allowed |
