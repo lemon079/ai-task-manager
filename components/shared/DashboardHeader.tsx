@@ -53,7 +53,7 @@ export default function DashboardHeader() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="size-7 rounded-md text-muted-foreground hover:text-foreground"
+                  className="size-9 sm:size-7 rounded-md text-muted-foreground hover:text-foreground flex items-center justify-center cursor-pointer"
                   aria-label="Open navigation menu"
                 >
                   <Menu className="size-4" />

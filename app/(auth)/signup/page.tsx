@@ -1,14 +1,10 @@
-import { SignupForm } from '@/components/auth/signup-form'
-import React from 'react'
+import { SignupForm } from "@/components/auth/signup-form";
+import { Suspense } from "react";
 
-const page = () => {
+export default function SignupPage() {
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
-      <div className="w-full max-w-sm">
-        <SignupForm />
-      </div>
-    </div>
-  )
+    <Suspense fallback={<div className="h-64 flex items-center justify-center"><div className="size-5 animate-spin rounded-full border-2 border-primary border-t-transparent" /></div>}>
+      <SignupForm />
+    </Suspense>
+  );
 }
-
-export default page

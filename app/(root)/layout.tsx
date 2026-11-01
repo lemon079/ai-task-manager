@@ -1,5 +1,6 @@
 import Sidebar from "@/components/shared/Sidebar";
 import DashboardHeader from "@/components/shared/DashboardHeader";
+import MobileBottomNav from "@/components/shared/MobileBottomNav";
 import { cn } from "@/lib/utils";
 import { Toaster } from "sonner";
 import { ModalProvider } from "../context/ModalContext";
@@ -35,11 +36,13 @@ export default function RootDashboardLayout({ children }: { children: React.Reac
       <div className="flex-1 flex flex-col min-w-0">
         <ModalProvider>
           <DashboardHeader />
-          <main className={cn("flex-1 w-full overflow-y-auto")}>
+          <main className={cn("flex-1 w-full overflow-y-auto pb-20 md:pb-6")}>
             <div className="max-w-6xl mx-auto p-4 sm:p-6">
               {children}
             </div>
           </main>
+          {/* Mobile Bottom Navigation Bar */}
+          <MobileBottomNav />
         </ModalProvider>
       </div>
 

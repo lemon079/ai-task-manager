@@ -5,6 +5,8 @@ import { useSession } from "next-auth/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import { InstallPrompt } from "./InstallPrompt";
+
 export function PwaProvider({ children }: { children: React.ReactNode }) {
   const { status } = useSession();
   const queryClient = useQueryClient();
@@ -101,5 +103,10 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
     prevStatus.current = status;
   }, [status, queryClient]);
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <InstallPrompt />
+    </>
+  );
 }
