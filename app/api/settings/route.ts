@@ -14,7 +14,7 @@ export async function GET() {
       where: { email: session.user.email },
       select: {
         notificationsEnabled: true,
-        dailyNotificationTime: true,
+        showTaskTitles: true,
         timeZone: true,
       },
     });
@@ -25,7 +25,8 @@ export async function GET() {
 
     return NextResponse.json({
       notificationsEnabled: user.notificationsEnabled,
-      notificationTime: user.dailyNotificationTime || "09:00",
+      notificationTime: "09:00",
+      showTaskTitles: user.showTaskTitles,
       timeZone:
         user.timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone,
     });
@@ -47,11 +48,10 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { notificationsEnabled, notificationTime, timeZone } = body;
+    const { notificationsEnabled, timeZone, showTaskTitles } = body;
 
     if (
       typeof notificationsEnabled !== "boolean" ||
-      !notificationTime ||
       !timeZone
     ) {
       return NextResponse.json({ error: "Invalid input" }, { status: 400 });
@@ -61,7 +61,7 @@ export async function POST(req: Request) {
       where: { email: session.user.email },
       data: {
         notificationsEnabled,
-        dailyNotificationTime: notificationTime,
+        showTaskTitles: typeof showTaskTitles === "boolean" ? showTaskTitles : true,
         timeZone,
       },
     });

@@ -164,7 +164,7 @@ export async function dispatchDuePushNotifications(): Promise<{
       email: true,
       name: true,
       timeZone: true,
-      dailyNotificationTime: true,
+      showTaskTitles: true,
     },
   });
 
@@ -212,17 +212,19 @@ export async function dispatchDuePushNotifications(): Promise<{
     );
 
     const totalActive = overdueTasks.length + dueTodayTasks.length + dueTomorrowTasks.length;
+    const notificationContext = {
+      showTaskTitles: user.showTaskTitles,
+      timeZone: userZone,
+      userName: user.name,
+    };
 
-    // Morning Digest Check: at local morning time (e.g. 09:00), if >= 3 tasks due/overdue
-    const isMorningTime = userNow.toFormat("HH:mm") === (user.dailyNotificationTime || "09:00");
+    // Morning Digest Check: at local morning time (09:xx local), if >= 3 tasks due/overdue
+    const isMorningTime = userNow.hour === 9;
     if (isMorningTime && totalActive >= 3) {
       const alreadySentDigest = await wasRecentlySent(user.id, null, "DIGEST", 18);
       if (!alreadySentDigest) {
         const digestTasks = [...dueTodayTasks, ...overdueTasks, ...dueTomorrowTasks];
-        const notification = buildNotification("DIGEST", digestTasks, {
-          timeZone: userZone,
-          userName: user.name,
-        });
+        const notification = buildNotification("DIGEST", digestTasks, notificationContext);
 
         const res = await sendPushToUser(
           user.id,
@@ -247,13 +249,13 @@ export async function dispatchDuePushNotifications(): Promise<{
     for (const task of overdueTasks) {
       const alreadySent = await wasRecentlySent(user.id, task.id, "OVERDUE", 12);
       if (!alreadySent) {
-        const notif = buildNotification("OVERDUE", [task], { timeZone: userZone });
+        const notif = buildNotification("OVERDUE", [task], notificationContext);
         const res = await sendPushToUser(
           user.id,
           {
             title: notif.title,
             body: notif.body,
-            taskId: task.id,
+            taskId: notif.data.taskId,
             url: notif.url,
             tag: notif.tag,
           },
@@ -267,13 +269,13 @@ export async function dispatchDuePushNotifications(): Promise<{
     for (const task of dueTodayTasks) {
       const alreadySent = await wasRecentlySent(user.id, task.id, "DUE_TODAY", 12);
       if (!alreadySent) {
-        const notif = buildNotification("DUE_TODAY", [task], { timeZone: userZone });
+        const notif = buildNotification("DUE_TODAY", [task], notificationContext);
         const res = await sendPushToUser(
           user.id,
           {
             title: notif.title,
             body: notif.body,
-            taskId: task.id,
+            taskId: notif.data.taskId,
             url: notif.url,
             tag: notif.tag,
           },
@@ -287,13 +289,13 @@ export async function dispatchDuePushNotifications(): Promise<{
     for (const task of dueTomorrowTasks) {
       const alreadySent = await wasRecentlySent(user.id, task.id, "DUE_TOMORROW", 12);
       if (!alreadySent) {
-        const notif = buildNotification("DUE_TOMORROW", [task], { timeZone: userZone });
+        const notif = buildNotification("DUE_TOMORROW", [task], notificationContext);
         const res = await sendPushToUser(
           user.id,
           {
             title: notif.title,
             body: notif.body,
-            taskId: task.id,
+            taskId: notif.data.taskId,
             url: notif.url,
             tag: notif.tag,
           },
