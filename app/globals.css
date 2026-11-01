@@ -4,18 +4,18 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Modern SaaS Theme
- * - Primary: Indigo-600
- * - Background: Slate-50
- * - Cards: White with shadow-sm
- * - Text: Slate-900 (headings), Slate-500 (muted)
+ * Linear / Notion Minimalist Theme
+ * - Single neutral scale (Zinc light & dark)
+ * - Single accent color (Linear Indigo #5e6ad2 / #707ee6)
+ * - Flat surfaces with soft 1px border
+ * - Small border radius (6px / 0.375rem)
  */
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -45,118 +45,111 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
   --radius-xl: calc(var(--radius) + 4px);
 }
 
 :root {
-  --radius: 0.5rem;
+  --radius: 0.375rem;
 
-  /* Slate-50 background */
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  /* Notion Light - Clean white canvas */
+  --background: #ffffff;
+  --foreground: #18181b;
 
-  /* White cards with subtle borders */
+  /* Flat cards with soft 1px border */
   --card: #ffffff;
-  --card-foreground: #0f172a;
+  --card-foreground: #18181b;
   --popover: #ffffff;
-  --popover-foreground: #0f172a;
+  --popover-foreground: #18181b;
 
-  /* Indigo-600 primary */
-  --primary: #4f46e5;
+  /* Linear Indigo - Single Accent */
+  --primary: #5e6ad2;
   --primary-foreground: #ffffff;
 
-  /* Slate secondary */
-  --secondary: #f1f5f9;
-  --secondary-foreground: #334155;
+  /* Quiet neutrals */
+  --secondary: #f4f4f5;
+  --secondary-foreground: #18181b;
 
-  /* Muted - Slate-100/500 */
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
 
-  /* Indigo accent */
-  --accent: #eef2ff;
-  --accent-foreground: #4f46e5;
+  --accent: #f4f4f5;
+  --accent-foreground: #18181b;
 
-  /* Destructive */
   --destructive: #ef4444;
 
-  /* Borders - Slate-200 */
-  --border: #e2e8f0;
-  --input: #e2e8f0;
-  --ring: #6366f1;
+  /* Soft 1px borders */
+  --border: #e4e4e7;
+  --input: #e4e4e7;
+  --ring: #5e6ad2;
 
   /* Charts */
-  --chart-1: #4f46e5;
+  --chart-1: #5e6ad2;
   --chart-2: #10b981;
   --chart-3: #f59e0b;
-  --chart-4: #ec4899;
+  --chart-4: #ef4444;
   --chart-5: #8b5cf6;
 
-  /* Sidebar - White */
-  --sidebar: #ffffff;
-  --sidebar-foreground: #0f172a;
-  --sidebar-primary: #4f46e5;
+  /* Sidebar */
+  --sidebar: #fafafa;
+  --sidebar-foreground: #18181b;
+  --sidebar-primary: #5e6ad2;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f1f5f9;
-  --sidebar-accent-foreground: #334155;
-  --sidebar-border: #e2e8f0;
-  --sidebar-ring: #6366f1;
+  --sidebar-accent: #f4f4f5;
+  --sidebar-accent-foreground: #18181b;
+  --sidebar-border: #e4e4e7;
+  --sidebar-ring: #5e6ad2;
 }
 
 .dark {
-  /* Dark slate background */
-  --background: #0f172a;
-  --foreground: #f8fafc;
+  /* Linear Dark - Near-black / Charcoal canvas */
+  --background: #09090b;
+  --foreground: #f4f4f5;
 
-  /* Dark cards */
-  --card: #1e293b;
-  --card-foreground: #f8fafc;
-  --popover: #1e293b;
-  --popover-foreground: #f8fafc;
+  /* Flat charcoal cards */
+  --card: #121215;
+  --card-foreground: #f4f4f5;
+  --popover: #121215;
+  --popover-foreground: #f4f4f5;
 
-  /* Lighter indigo for dark mode */
-  --primary: #818cf8;
-  --primary-foreground: #0f172a;
+  /* Linear Indigo Accent (Calibrated for dark mode) */
+  --primary: #707ee6;
+  --primary-foreground: #ffffff;
 
-  /* Dark secondary */
-  --secondary: #334155;
-  --secondary-foreground: #f1f5f9;
+  --secondary: #1f1f23;
+  --secondary-foreground: #f4f4f5;
 
-  /* Muted */
-  --muted: #334155;
-  --muted-foreground: #94a3b8;
+  --muted: #1f1f23;
+  --muted-foreground: #a1a1aa;
 
-  /* Dark accent */
-  --accent: #1e1b4b;
-  --accent-foreground: #a5b4fc;
+  --accent: #1f1f23;
+  --accent-foreground: #f4f4f5;
 
-  /* Destructive */
   --destructive: #f87171;
 
-  /* Borders */
-  --border: #334155;
-  --input: #334155;
-  --ring: #818cf8;
+  /* Quiet 1px dark borders */
+  --border: #27272a;
+  --input: #27272a;
+  --ring: #707ee6;
 
   /* Charts */
-  --chart-1: #818cf8;
+  --chart-1: #707ee6;
   --chart-2: #34d399;
   --chart-3: #fbbf24;
-  --chart-4: #f472b6;
+  --chart-4: #f87171;
   --chart-5: #a78bfa;
 
   /* Sidebar */
-  --sidebar: #1e293b;
-  --sidebar-foreground: #f8fafc;
-  --sidebar-primary: #818cf8;
-  --sidebar-primary-foreground: #0f172a;
-  --sidebar-accent: #334155;
-  --sidebar-accent-foreground: #f1f5f9;
-  --sidebar-border: #334155;
-  --sidebar-ring: #818cf8;
+  --sidebar: #0d0d10;
+  --sidebar-foreground: #f4f4f5;
+  --sidebar-primary: #707ee6;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1f1f23;
+  --sidebar-accent-foreground: #f4f4f5;
+  --sidebar-border: #27272a;
+  --sidebar-ring: #707ee6;
 }
 
 @layer base {
@@ -174,7 +167,7 @@
   }
 
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply bg-background text-foreground antialiased text-[13px] font-normal;
   }
 }
 
@@ -184,29 +177,49 @@
   }
 
   .no-result {
-    @apply text-muted-foreground text-sm text-center;
+    @apply text-muted-foreground text-xs text-center py-6;
   }
 
   .error {
-    @apply text-destructive text-sm;
+    @apply text-destructive text-xs;
   }
 
-  /* Gradient text */
-  .text-gradient {
-    @apply bg-gradient-to-r from-primary to-indigo-400 bg-clip-text text-transparent;
+  /* Linear-style flat card */
+  .card-flat {
+    @apply bg-card rounded-md border border-border transition-colors;
   }
 
-  /* Modern card style */
-  .card-modern {
-    @apply bg-card rounded-lg shadow-sm border border-border;
-  }
-
-  /* Stat card hover */
+  /* Subtle stat card */
   .stat-card {
-    @apply bg-card rounded-lg shadow-sm border border-border p-6 transition-shadow hover:shadow-md;
+    @apply bg-card rounded-md border border-border p-4 transition-colors;
   }
 }
 
 @utility no-scrollbar {
   @apply [scrollbar-width:none] [&::-webkit-scrollbar]:hidden;
+}
+
+/* Animated Strikethrough Effect: Line sweeps smoothly from left to right */
+.strikethrough-line {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.strikethrough-line::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 100%;
+  height: 1.25px;
+  background-color: currentColor;
+  transform: translateY(-50%) scaleX(0);
+  transform-origin: left center;
+  transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+.strikethrough-line[data-completed="true"]::after {
+  transform: translateY(-50%) scaleX(1);
 }

@@ -1,53 +1,71 @@
 import { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+type StatDotColor = "neutral" | "amber" | "emerald" | "rose";
+
 interface StatCardProps {
-    title: string;
-    value: string | number;
-    icon: LucideIcon;
-    description?: string;
-    trend?: {
-        value: number;
-        isPositive: boolean;
-    };
-    className?: string;
+  title: string;
+  value: string | number;
+  icon?: LucideIcon;
+  description?: string;
+  trend?: {
+    value: number;
+    isPositive: boolean;
+  };
+  indicator?: StatDotColor;
+  className?: string;
 }
 
+const dotStyles: Record<StatDotColor, string> = {
+  neutral: "bg-muted-foreground/50",
+  amber: "bg-amber-500",
+  emerald: "bg-emerald-500",
+  rose: "bg-rose-500",
+};
+
 export default function StatCard({
-    title,
-    value,
-    icon: Icon,
-    description,
-    trend,
-    className,
+  title,
+  value,
+  description,
+  trend,
+  indicator = "neutral",
+  className,
 }: StatCardProps) {
-    return (
-        <div className={cn("stat-card", className)}>
-            <div className="flex items-start justify-between">
-                <div className="flex-1">
-                    <p className="text-sm font-medium text-muted-foreground">{title}</p>
-                    <p className="text-3xl font-bold text-foreground mt-2">{value}</p>
-                    {description && (
-                        <p className="text-sm text-muted-foreground mt-1">{description}</p>
-                    )}
-                    {trend && (
-                        <div className="flex items-center gap-1 mt-2">
-                            <span
-                                className={cn(
-                                    "text-sm font-medium",
-                                    trend.isPositive ? "text-green-600" : "text-red-600"
-                                )}
-                            >
-                                {trend.isPositive ? "+" : "-"}{Math.abs(trend.value)}%
-                            </span>
-                            <span className="text-xs text-muted-foreground">vs last week</span>
-                        </div>
-                    )}
-                </div>
-                <div className="size-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Icon className="size-6 text-primary" />
-                </div>
-            </div>
+  return (
+    <div
+      className={cn(
+        "rounded-md border border-border bg-card p-3.5 sm:p-4 transition-colors",
+        className
+      )}
+    >
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+          <span className={cn("size-1.5 rounded-full shrink-0", dotStyles[indicator])} />
+          {title}
+        </span>
+        {trend && (
+          <span
+            className={cn(
+              "text-[11px] font-medium tabular-nums",
+              trend.isPositive ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
+            )}
+          >
+            {trend.isPositive ? "+" : "-"}
+            {Math.abs(trend.value)}%
+          </span>
+        )}
+      </div>
+
+      <div className="mt-1.5">
+        <div className="text-2xl font-semibold tracking-tight text-foreground tabular-nums">
+          {value}
         </div>
-    );
+        {description && (
+          <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
+            {description}
+          </p>
+        )}
+      </div>
+    </div>
+  );
 }

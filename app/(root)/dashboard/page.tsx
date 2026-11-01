@@ -1,98 +1,157 @@
 import { getTasks } from "@/lib/actions/task";
 import StatCard from "@/components/dashboard/StatCard";
-import { ListTodo, Clock, CheckCircle2, AlertCircle } from "lucide-react";
 import { ScheduleCalendar } from "@/components/calender/Calendar";
 import TaskTable from "@/components/tasks/TaskTable";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Sparkles } from "lucide-react";
 
 export default async function DashboardPage() {
   const tasks = await getTasks();
 
-  // Calculate stats
   const totalTasks = tasks.length;
-  const pendingTasks = tasks.filter(t => t.status === "pending" || t.status === "in_progress").length;
-  const completedTasks = tasks.filter(t => t.status === "completed").length;
-  const overdueTasks = tasks.filter(t => t.status === "over_due").length;
+  const pendingTasks = tasks.filter(
+    (t) => t.status === "pending" || t.status === "in_progress"
+  ).length;
+  const completedTasks = tasks.filter((t) => t.status === "completed").length;
+  const overdueTasks = tasks.filter((t) => t.status === "over_due").length;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 pb-12">
       {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-        <p className="text-muted-foreground mt-1">Overview of your tasks and schedule</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-base sm:text-lg font-semibold tracking-tight text-foreground">
+            Dashboard
+          </h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Overview of your tasks and schedule
+          </p>
+        </div>
+
+        <Link href="/task-ai">
+          <Button
+            size="sm"
+            className="h-7 px-2.5 rounded-md text-xs font-medium gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            <Sparkles className="size-3" />
+            <span>New Task</span>
+          </Button>
+        </Link>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* Four Quiet Stat Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard
-          title="Total Tasks"
+          title="Total"
           value={totalTasks}
-          icon={ListTodo}
-          description="All time"
+          indicator="neutral"
         />
         <StatCard
           title="Pending"
           value={pendingTasks}
-          icon={Clock}
-          description="In progress"
-          className="border-l-4 border-l-amber-500"
+          indicator="amber"
         />
         <StatCard
           title="Completed"
           value={completedTasks}
-          icon={CheckCircle2}
-          description="Well done!"
-          className="border-l-4 border-l-green-500"
+          indicator="emerald"
         />
         <StatCard
           title="Overdue"
           value={overdueTasks}
-          icon={AlertCircle}
-          description="Needs attention"
-          className="border-l-4 border-l-red-500"
+          indicator="rose"
         />
       </div>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Upcoming Schedule - Calendar */}
-        <div className="xl:col-span-2 bg-card rounded-lg shadow-sm border border-border p-6">
-          <h2 className="text-lg font-semibold text-foreground mb-4">Upcoming Schedule</h2>
-          <ScheduleCalendar tasks={tasks} />
-        </div>
-
+      {/* Side-by-Side: Recent Tasks & Upcoming Schedule (Equal Visual Weight) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Recent Tasks */}
-        <div className="bg-card rounded-lg shadow-sm border border-border p-6">
-          <h2 className="text-lg font-semibold text-foreground mb-4">Recent Tasks</h2>
-          <div className="space-y-3">
-            {tasks.slice(0, 5).map((task) => (
-              <div
-                key={task.id}
-                className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
-              >
-                <div className={`size-2 rounded-full ${task.status === "completed" ? "bg-green-500" :
-                  task.status === "over_due" ? "bg-red-500" :
-                    task.status === "in_progress" ? "bg-amber-500" :
-                      "bg-slate-400"
-                  }`} />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">{task.title}</p>
-                  <p className="text-xs text-muted-foreground capitalize">{task.priority} priority</p>
+        <div className="rounded-md border border-border bg-card p-4 flex flex-col">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-xs font-semibold text-foreground">
+              Recent Tasks
+            </h2>
+            <span className="text-[11px] text-muted-foreground">
+              {tasks.length} total
+            </span>
+          </div>
+
+          <div className="space-y-1 divide-y divide-border/40 flex-1">
+            {tasks.slice(0, 5).map((task) => {
+              const isDone = task.status === "completed";
+              const isOverdue = task.status === "over_due";
+              const isPending = task.status === "in_progress" || task.status === "pending";
+
+              return (
+                <div
+                  key={task.id}
+                  className="flex items-center justify-between py-2 first:pt-0 last:pb-0"
+                >
+                  <div className="flex items-center gap-2 min-w-0 pr-2">
+                    <span
+                      className={`size-1.5 rounded-full shrink-0 ${
+                        isDone
+                          ? "bg-muted-foreground/40"
+                          : isOverdue
+                          ? "bg-rose-500"
+                          : isPending
+                          ? "bg-amber-500"
+                          : "bg-muted-foreground"
+                      }`}
+                    />
+                    <span
+                      data-completed={isDone ? "true" : "false"}
+                      className={`strikethrough-line text-xs truncate transition-colors duration-300 ${
+                        isDone
+                          ? "text-muted-foreground/60"
+                          : "text-foreground"
+                      }`}
+                    >
+                      <span className="truncate">{task.title}</span>
+                    </span>
+                  </div>
+
+                  <span className="text-[11px] text-muted-foreground capitalize shrink-0 tabular-nums">
+                    {task.priority}
+                  </span>
                 </div>
-              </div>
-            ))}
+              );
+            })}
+
             {tasks.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-4">No tasks yet</p>
+              <div className="py-8 text-center text-xs text-muted-foreground">
+                No tasks yet. Create one with AI to get started.
+              </div>
             )}
           </div>
         </div>
+
+        {/* Upcoming Schedule (Minimal Calendar) */}
+        <div className="rounded-md border border-border bg-card p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-xs font-semibold text-foreground">
+              Upcoming Schedule
+            </h2>
+            <span className="text-[11px] text-muted-foreground">
+              Calendar
+            </span>
+          </div>
+          <ScheduleCalendar tasks={tasks} />
+        </div>
       </div>
 
-      {/* Task Table */}
-      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-foreground">All Tasks</h2>
+      {/* All Tasks Table */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xs font-semibold text-foreground">
+            All Tasks
+          </h2>
+          <span className="text-[11px] text-muted-foreground tabular-nums">
+            {tasks.length} task{tasks.length !== 1 ? "s" : ""}
+          </span>
         </div>
-        <TaskTable tasks={tasks} />
+        <TaskTable tasks={tasks} isDashboard />
       </div>
     </div>
   );
