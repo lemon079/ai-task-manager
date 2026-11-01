@@ -12,7 +12,8 @@
     "test:eval:batched": "tsx tests/agent-eval-batched.test.ts",
     "test:e2e": "tsx tests/test-dev-ui.ts",
     "postinstall": "prisma generate",
-    "migrate:deploy": "prisma migrate deploy"
+    "migrate:deploy": "prisma migrate deploy",
+    "pwa:icons": "tsx scripts/generate-icons.ts"
   },
   "dependencies": {
     "@assistant-ui/react": "^0.15.32",
