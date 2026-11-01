@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import CustomLoader from "@/components/shared/CustomLoader";
 import { DateTime } from "luxon";
 import { useTheme } from "next-themes";
+import PushNotificationToggle from "@/components/settings/PushNotificationToggle";
 
 function SettingsForm({
   initialSettings,
@@ -97,6 +98,9 @@ function SettingsForm({
             onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
           />
         </div>
+
+        {/* Row: Web Push Notifications (PWA) */}
+        <PushNotificationToggle />
 
         {/* Row: Daily Task Summary */}
         <div className="flex items-center justify-between p-3.5 sm:p-4">

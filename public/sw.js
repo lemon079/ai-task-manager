@@ -194,13 +194,18 @@ self.addEventListener("push", (event) => {
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
 
+  // If user tapped "Dismiss", do nothing
+  if (event.action === "dismiss") {
+    return;
+  }
+
   const targetUrl = event.notification.data?.url || "/dashboard";
 
   event.waitUntil(
     clients
       .matchAll({ type: "window", includeUncontrolled: true })
       .then((clientList) => {
-        // If an existing window is open, focus it and navigate
+        // If an existing window is open on this origin, focus it and navigate
         for (const client of clientList) {
           if (client.url.includes(self.location.origin) && "focus" in client) {
             client.navigate(targetUrl);
@@ -221,7 +226,7 @@ self.addEventListener("pushsubscriptionchange", (event) => {
     self.registration.pushManager
       .subscribe(event.oldSubscription?.options || { userVisibleOnly: true })
       .then((newSub) => {
-        return fetch("/api/notifications/subscribe", {
+        return fetch("/api/push/subscribe", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(newSub),
