@@ -1,5 +1,7 @@
 import webpush from "web-push";
 import { prisma } from "@/prisma/prisma";
+import { DateTime } from "luxon";
+import { buildNotification } from "@/lib/notifications/templates";
 
 // Ensure VAPID details are configured once
 const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
@@ -42,16 +44,12 @@ export async function sendWebPushToSubscription(
       title: payload.title,
       body: payload.body,
       icon: payload.icon || "/icons/icon-192x192.png",
-      badge: payload.badge || "/icons/badge-72x72.png",
+      badge: payload.badge || "/icons/badge-96x96.png",
       tag: payload.tag || "neuratask-notification",
       data: {
         url: payload.url || "/dashboard",
         taskId: payload.taskId,
       },
-      actions: payload.actions || [
-        { action: "open", title: "View" },
-        { action: "dismiss", title: "Dismiss" },
-      ],
     });
 
     await webpush.sendNotification(pushSub, notificationPayload);
@@ -151,7 +149,9 @@ export async function wasRecentlySent(
  */
 export async function dispatchDuePushNotifications(): Promise<{
   overdueSent: number;
-  dueSoonSent: number;
+  dueTodaySent: number;
+  dueTomorrowSent: number;
+  digestSent: number;
 }> {
   // Find users who have at least one active push subscription
   const usersWithPush = await prisma.user.findMany({
@@ -159,71 +159,150 @@ export async function dispatchDuePushNotifications(): Promise<{
       notificationsEnabled: true,
       pushSubscriptions: { some: {} },
     },
-    select: { id: true, email: true },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      timeZone: true,
+      dailyNotificationTime: true,
+    },
   });
 
   if (usersWithPush.length === 0) {
-    return { overdueSent: 0, dueSoonSent: 0 };
+    return { overdueSent: 0, dueTodaySent: 0, dueTomorrowSent: 0, digestSent: 0 };
   }
 
-  const now = new Date();
-  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+  const nowUTC = DateTime.utc();
+  const threeDaysAgo = nowUTC.minus({ days: 3 }).toJSDate();
 
   let overdueSent = 0;
-  let dueSoonSent = 0;
+  let dueTodaySent = 0;
+  let dueTomorrowSent = 0;
+  let digestSent = 0;
 
   for (const user of usersWithPush) {
-    // Fetch user's uncompleted tasks with due dates
+    const userZone = user.timeZone || "UTC";
+    const userNow = nowUTC.setZone(userZone);
+    const userStartOfDay = userNow.startOf("day").toJSDate();
+    const userEndOfDay = userNow.endOf("day").toJSDate();
+    const userStartOfTomorrow = userNow.plus({ days: 1 }).startOf("day").toJSDate();
+    const userEndOfTomorrow = userNow.plus({ days: 1 }).endOf("day").toJSDate();
+
+    // Fetch user's pending/in-progress tasks with due dates
     const pendingTasks = await prisma.task.findMany({
       where: {
         userId: user.id,
         status: { in: ["pending", "in_progress", "over_due"] },
         dueDate: { not: null },
       },
+      orderBy: { dueDate: "asc" },
     });
 
-    for (const task of pendingTasks) {
-      if (!task.dueDate) continue;
+    if (pendingTasks.length === 0) continue;
 
-      const isOverdue = task.dueDate < now;
-      const isDueToday = task.dueDate >= startOfDay && task.dueDate <= endOfDay;
+    // Partition tasks
+    const overdueTasks = pendingTasks.filter(
+      (t) => t.dueDate && t.dueDate < userNow.toJSDate() && t.dueDate >= threeDaysAgo
+    );
+    const dueTodayTasks = pendingTasks.filter(
+      (t) => t.dueDate && t.dueDate >= userStartOfDay && t.dueDate <= userEndOfDay
+    );
+    const dueTomorrowTasks = pendingTasks.filter(
+      (t) => t.dueDate && t.dueDate >= userStartOfTomorrow && t.dueDate <= userEndOfTomorrow
+    );
 
-      if (isOverdue) {
-        const alreadySent = await wasRecentlySent(user.id, task.id, "OVERDUE", 12);
-        if (!alreadySent) {
-          const res = await sendPushToUser(
-            user.id,
-            {
-              title: "Task Overdue",
-              body: `"${task.title}" is overdue. Tap to update or complete it.`,
-              taskId: task.id,
-              url: "/task-ai",
-              tag: `overdue-${task.id}`,
-            },
-            "OVERDUE"
-          );
-          if (res.sent > 0) overdueSent++;
+    const totalActive = overdueTasks.length + dueTodayTasks.length + dueTomorrowTasks.length;
+
+    // Morning Digest Check: at local morning time (e.g. 09:00), if >= 3 tasks due/overdue
+    const isMorningTime = userNow.toFormat("HH:mm") === (user.dailyNotificationTime || "09:00");
+    if (isMorningTime && totalActive >= 3) {
+      const alreadySentDigest = await wasRecentlySent(user.id, null, "DIGEST", 18);
+      if (!alreadySentDigest) {
+        const digestTasks = [...dueTodayTasks, ...overdueTasks, ...dueTomorrowTasks];
+        const notification = buildNotification("DIGEST", digestTasks, {
+          timeZone: userZone,
+          userName: user.name,
+        });
+
+        const res = await sendPushToUser(
+          user.id,
+          {
+            title: notification.title,
+            body: notification.body,
+            url: notification.url,
+            tag: notification.tag,
+          },
+          "DIGEST"
+        );
+
+        if (res.sent > 0) {
+          digestSent++;
+          continue; // Skip individual task notifications for this morning sweep
         }
-      } else if (isDueToday) {
-        const alreadySent = await wasRecentlySent(user.id, task.id, "DUE_SOON", 12);
-        if (!alreadySent) {
-          const res = await sendPushToUser(
-            user.id,
-            {
-              title: "Task Due Today",
-              body: `"${task.title}" is scheduled for completion today.`,
-              taskId: task.id,
-              url: "/task-ai",
-              tag: `duesoon-${task.id}`,
-            },
-            "DUE_SOON"
-          );
-          if (res.sent > 0) dueSoonSent++;
-        }
+      }
+    }
+
+    // Individual Task Sweeps (with 12h idempotency)
+    // 1. Overdue Tasks (nagging limit: once per 12h, max 3 days past due)
+    for (const task of overdueTasks) {
+      const alreadySent = await wasRecentlySent(user.id, task.id, "OVERDUE", 12);
+      if (!alreadySent) {
+        const notif = buildNotification("OVERDUE", [task], { timeZone: userZone });
+        const res = await sendPushToUser(
+          user.id,
+          {
+            title: notif.title,
+            body: notif.body,
+            taskId: task.id,
+            url: notif.url,
+            tag: notif.tag,
+          },
+          "OVERDUE"
+        );
+        if (res.sent > 0) overdueSent++;
+      }
+    }
+
+    // 2. Tasks Due Today (morning of)
+    for (const task of dueTodayTasks) {
+      const alreadySent = await wasRecentlySent(user.id, task.id, "DUE_TODAY", 12);
+      if (!alreadySent) {
+        const notif = buildNotification("DUE_TODAY", [task], { timeZone: userZone });
+        const res = await sendPushToUser(
+          user.id,
+          {
+            title: notif.title,
+            body: notif.body,
+            taskId: task.id,
+            url: notif.url,
+            tag: notif.tag,
+          },
+          "DUE_TODAY"
+        );
+        if (res.sent > 0) dueTodaySent++;
+      }
+    }
+
+    // 3. Tasks Due Tomorrow (day before)
+    for (const task of dueTomorrowTasks) {
+      const alreadySent = await wasRecentlySent(user.id, task.id, "DUE_TOMORROW", 12);
+      if (!alreadySent) {
+        const notif = buildNotification("DUE_TOMORROW", [task], { timeZone: userZone });
+        const res = await sendPushToUser(
+          user.id,
+          {
+            title: notif.title,
+            body: notif.body,
+            taskId: task.id,
+            url: notif.url,
+            tag: notif.tag,
+          },
+          "DUE_TOMORROW"
+        );
+        if (res.sent > 0) dueTomorrowSent++;
       }
     }
   }
 
-  return { overdueSent, dueSoonSent };
+  return { overdueSent, dueTodaySent, dueTomorrowSent, digestSent };
 }

@@ -26,7 +26,7 @@ export const metadata = {
 
 export default function RootDashboardLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen min-h-[100dvh] flex bg-background">
+    <div className="min-h-[100dvh] flex bg-background">
       {/* Desktop Persistent Sidebar */}
       <div className="hidden md:flex flex-shrink-0">
         <Sidebar />

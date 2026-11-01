@@ -1,10 +1,11 @@
 import axios from "axios";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-interface Settings {
+export interface Settings {
   notificationsEnabled: boolean;
   notificationTime: string;
   timeZone: string;
+  showTaskTitles?: boolean;
 }
 
 // Fetch user settings

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { sendPushToUser } from "@/lib/push";
+import { buildNotification } from "@/lib/notifications/templates";
 
 export async function POST() {
   try {
@@ -9,13 +10,15 @@ export async function POST() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const notification = buildNotification("TEST");
+
     const result = await sendPushToUser(
       session.user.id,
       {
-        title: "NeuraTask Push Notification",
-        body: "Web push notifications are configured and working smoothly!",
-        url: "/dashboard",
-        tag: `test-push-${Date.now()}`,
+        title: notification.title,
+        body: notification.body,
+        url: notification.url,
+        tag: notification.tag,
       },
       "TEST"
     );

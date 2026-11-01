@@ -1,10 +1,14 @@
 import { DateTime } from "luxon";
 import { NextResponse } from "next/server";
-import { getTasksForUser, summarizeTasks } from "@/lib/actions/task";
-import { sendTaskEmailNotifications } from "@/lib/actions/notification";
-import { prisma } from "@/prisma/prisma";
-import { sendPushToUser, dispatchDuePushNotifications } from "@/lib/push";
+import { dispatchDuePushNotifications } from "@/lib/push";
 
+/**
+ * NeuraTask Push-Only Notification Cron Endpoint
+ *
+ * Product Invariant:
+ * Scheduled job is a push sender ONLY. No email reminder code, templates,
+ * env vars, dependencies, or crons exist anywhere in this system.
+ */
 export async function GET(req: Request) {
   try {
     // Secure cron endpoint with CRON_SECRET
@@ -17,81 +21,17 @@ export async function GET(req: Request) {
       }
     }
 
-    // 1️⃣ Current UTC time
     const nowUTC = DateTime.utc();
-    console.log(`[CRON] Running global check at UTC ${nowUTC.toFormat("HH:mm:ss")}`);
+    console.log(`[CRON] Running global push sweep at UTC ${nowUTC.toFormat("yyyy-MM-dd HH:mm:ss")}`);
 
-    // 2️⃣ Sweep and dispatch any due-soon or overdue Web Push notifications across active subscribers
-    const duePushResults = await dispatchDuePushNotifications();
-
-    // 3️⃣ Fetch users with daily summary notifications enabled
-    const users = await prisma.user.findMany({
-      where: {
-        notificationsEnabled: true,
-        dailyNotificationTime: { not: null },
-        timeZone: { not: null },
-      },
-      select: {
-        id: true,
-        email: true,
-        dailyNotificationTime: true,
-        timeZone: true,
-      },
-    });
-
-    if (users.length === 0) {
-      console.log("[CRON] No users with notifications enabled.");
-      return NextResponse.json({
-        message: "No daily summary users found.",
-        push: duePushResults,
-      }, { status: 200 });
-    }
-
-    // 4️⃣ Loop over users and compare times for daily briefing
-    for (const user of users) {
-      // Convert UTC → user's local timezone
-      const userTime = nowUTC.setZone(user.timeZone || "");
-
-      // Compare formatted "HH:mm" time with user's notificationTime
-      if (userTime.toFormat("HH:mm") !== user.dailyNotificationTime) {
-        console.log(
-          `[CRON] Skipping ${user.email} — local time ${userTime.toFormat("HH:mm")} ≠ ${user.dailyNotificationTime} (${user.timeZone})`
-        );
-        continue;
-      }
-
-      console.log(`[CRON] Sending daily task summary to ${user.email} (${user.timeZone})`);
-
-      // Get tasks for this specific user
-      const tasks = await getTasksForUser(user.id);
-      if (!tasks || tasks.length === 0) {
-        console.log(`[CRON] No tasks for ${user.email}`);
-        continue;
-      }
-
-      // Email dispatch
-      const summary = await summarizeTasks(tasks);
-      await sendTaskEmailNotifications(tasks, summary as string);
-
-      // Web Push dispatch
-      await sendPushToUser(
-        user.id,
-        {
-          title: "NeuraTask Daily Summary",
-          body: `You have ${tasks.length} task${tasks.length !== 1 ? "s" : ""} on your agenda today. Tap to view.`,
-          url: "/dashboard",
-          tag: `daily-summary-${user.id}-${nowUTC.toFormat("yyyy-MM-dd")}`,
-        },
-        "DAILY_SUMMARY"
-      );
-
-      console.log(`[CRON] Notifications sent to ${user.email}`);
-    }
+    // Sweep and dispatch Web Push reminders (day before, morning of, overdue <= 3d, 9am digest)
+    const pushResults = await dispatchDuePushNotifications();
 
     return NextResponse.json(
       {
-        message: "Global cron executed successfully.",
-        push: duePushResults,
+        message: "Push notifications dispatched successfully.",
+        timestamp: nowUTC.toISO(),
+        results: pushResults,
       },
       { status: 200 }
     );
