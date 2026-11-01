@@ -9,6 +9,7 @@ import bcrypt from "bcrypt";
  * @see https://authjs.dev/getting-started/migrating-to-v5
  */
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  trustHost: true,
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
