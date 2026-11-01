@@ -1,6 +1,5 @@
 import { BaseChatMessageHistory } from "@langchain/core/chat_history";
 import { initializeAgent } from "../agent";
-import { RunnableWithMessageHistory } from "@langchain/core/runnables";
 import { taskPrompt } from "../prompts/task";
 import { createTaskTools } from "../tools/task";
 import { PrismaChatMessageHistory } from "./prisma-chat-message";
@@ -42,10 +41,5 @@ export async function getTaskAgentForUser(userId: string) {
     ? primaryExecutor.withFallbacks({ fallbacks: [fallbackExecutor] })
     : primaryExecutor;
 
-  return new RunnableWithMessageHistory({
-    runnable: resilientExecutor,
-    getMessageHistory: (sessionId: string) => new PrismaChatMessageHistory(sessionId, userId),
-    inputMessagesKey: "input",
-    historyMessagesKey: "chat_history",
-  });
+  return resilientExecutor;
 }

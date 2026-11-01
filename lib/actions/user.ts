@@ -25,14 +25,20 @@ export async function deleteUserData(): Promise<{ success: boolean; message: str
     }
 
     // 2. Delete all chat messages for this user
-    await prisma.message.deleteMany({
-      where: {
-        OR: [
-          { chatId: `chat-${userId}` },
-          { userId },
-        ],
-      },
-    });
+    try {
+      await prisma.message.deleteMany({
+        where: {
+          OR: [
+            { chatId: `chat-${userId}` },
+            { userId },
+          ],
+        },
+      });
+    } catch {
+      await prisma.message.deleteMany({
+        where: { chatId: `chat-${userId}` },
+      });
+    }
 
     // 3. Delete all tasks for this user
     await prisma.task.deleteMany({

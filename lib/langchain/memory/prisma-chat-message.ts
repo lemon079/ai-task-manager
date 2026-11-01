@@ -76,14 +76,26 @@ export class PrismaChatMessageHistory extends BaseChatMessageHistory {
     const cleanContent = content.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
     if (!cleanContent) return;
 
-    await prisma.message.create({
-      data: {
-        chatId: this.chatId,
-        userId: this.userId || null,
-        role,
-        content: cleanContent,
-      },
-    });
+    const data: Record<string, any> = {
+      chatId: this.chatId,
+      role,
+      content: cleanContent,
+    };
+    if (this.userId) {
+      data.userId = this.userId;
+    }
+
+    try {
+      await prisma.message.create({ data: data as any });
+    } catch (err: any) {
+      // Defensive fallback if runtime Prisma engine has an older cached client schema missing userId
+      if (err?.message?.includes("Unknown argument `userId`") || err?.message?.includes("userId")) {
+        delete data.userId;
+        await prisma.message.create({ data: data as any });
+      } else {
+        throw err;
+      }
+    }
   }
 
   async addUserMessage(content: string) {

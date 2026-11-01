@@ -99,6 +99,8 @@ export async function POST(req: NextRequest) {
     // 8. Prepare Isolated User Agent & History
     const userAgent = await getTaskAgentForUser(userId);
     const sessionId = `chat-${userId}`;
+    const history = new PrismaChatMessageHistory(sessionId, userId);
+    const chatHistory = await history.getMessages();
 
     // Check if client expects streaming (SSE)
     const acceptHeader = req.headers.get("accept") || "";
@@ -109,13 +111,13 @@ export async function POST(req: NextRequest) {
       const response = await userAgent.invoke(
         {
           input: inputCheck.sanitizedInput,
+          chat_history: chatHistory,
           current_date: currentDate,
           current_weekday: currentWeekday,
           user_timezone: userTimezone,
           recent_tasks: recentTasks,
         },
         {
-          configurable: { sessionId },
           signal: req.signal,
         }
       );
@@ -125,6 +127,11 @@ export async function POST(req: NextRequest) {
       }
 
       const sanitizedOutput = sanitizeOutput(response.output);
+
+      // Save messages to history
+      await history.addUserMessage(inputCheck.sanitizedInput!);
+      await history.addAIChatMessage(sanitizedOutput);
+
       return NextResponse.json(
         { result: sanitizedOutput },
         {
@@ -148,6 +155,7 @@ export async function POST(req: NextRequest) {
           const eventStream = userAgent.streamEvents(
             {
               input: inputCheck.sanitizedInput,
+              chat_history: chatHistory,
               current_date: currentDate,
               current_weekday: currentWeekday,
               user_timezone: userTimezone,
@@ -155,7 +163,6 @@ export async function POST(req: NextRequest) {
             },
             {
               version: "v2",
-              configurable: { sessionId },
               signal: req.signal,
             }
           );
@@ -203,7 +210,6 @@ export async function POST(req: NextRequest) {
 
           // Save final message to history
           if (fullOutput.trim()) {
-            const history = new PrismaChatMessageHistory(sessionId, userId);
             await history.addUserMessage(inputCheck.sanitizedInput!);
             await history.addAIChatMessage(sanitizeOutput(fullOutput));
           }
