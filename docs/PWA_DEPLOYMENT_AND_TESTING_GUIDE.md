@@ -1,104 +1,120 @@
-# NeuraTask PWA & Web Push Notification Guide
+# NeuraTask Install-Only PWA & Web Push Notification Guide
 
-This guide covers the architecture, deployment requirements, and cross-device testing procedures for NeuraTask's Progressive Web App (PWA) with Web Push notifications.
+This guide covers the architecture, deployment specifications, and cross-device testing procedures for NeuraTask as an **INSTALL-ONLY PWA** with Web Push reminders.
 
 ---
 
-## 1. Architecture Overview
+## 1. Product Invariants & Non-Negotiables
+
+1. **Install-Only Access**:
+   * NeuraTask is usable **ONLY** as an installed app on desktop (Chrome/Edge installs, macOS Safari Add to Dock) and mobile devices (Android Home Screen, iOS Home Screen).
+   * In a normal browser tab, every page URL shows one install page (`components/pwa/InstallPage.tsx`) and nothing else: no app UI, no sign-in form, and zero authenticated API calls.
+   * Session and data providers (`NextAuthProvider`, `QueryProvider`, push/chat sync) are completely unmounted until standalone display mode is detected.
+   * Public static allow-list: `/offline`, `/privacy`, and `/terms`.
+   * **Production Safety Guard**: If `NEXT_PUBLIC_ALLOW_BROWSER === "true"` in a production build, `next.config.ts` throws a build error immediately.
+
+2. **Push-Only Reminders (Zero Email)**:
+   * There is **NO email** anywhere in the reminder system. `nodemailer`, SMTP credentials (`EMAIL_*`), and email templates have been completely removed.
+   * Web Push is the sole notification channel.
+   * Reminders notify users when a task's due date is near (the day before and the morning of, in their local timezone) and when it becomes overdue.
+   * Notification titles start with exactly **ONE** leading emoji from the Part 5B map (`⏰`, `📅`, `⚠️`, `📋`, `🔔`). No emojis appear anywhere else in title or body.
+   * Privacy mode default: Task titles are shown. A user toggle in Settings ("Show task titles in notifications") switches notifications to generic wording with empty task payloads.
+
+---
+
+## 2. Architecture & Service Worker
+
+### Display Mode Detection (`lib/pwa/display-mode.ts`)
+* Standalone check evaluates:
+  * `(display-mode: standalone)`
+  * `(display-mode: fullscreen)`
+  * `(display-mode: minimal-ui)`
+  * `window.navigator.standalone === true` (iOS WebKit standalone)
+* Detection state is **never** stored in cookies or `localStorage` to prevent Android WebAPK cookie-sharing leaks into Chrome tabs.
 
 ### Service Worker Caching Tiers (`public/sw.js`)
-* **`NetworkOnly`**: All `/api/*` requests (including NextAuth `/api/auth/*` and LangChain `/api/agents/*`) and non-GET requests bypass the Service Worker cache completely.
-* **`StaleWhileRevalidate`**: Static assets (`/_next/static/*`, `/icons/*`, fonts) are served immediately from cache while being updated in the background.
-* **`NetworkFirst`**: Document navigations attempt a network fetch with a 3.5s timeout, falling back cleanly to `/offline` if disconnected.
-* **Sign-out Privacy Guarantee**: Dispatching `CLEAR_PRIVATE_CACHE` to the Service Worker purges all non-static caches immediately.
-* **Lifecycle**: Listens for `SKIP_WAITING` without blocking active input fields or active chat streams.
-
-### Web Push & VAPID Flow
-```
-User Device (Browser / PWA)
-      │
-      │ 1. Requests Notification.permission
-      │ 2. pushManager.subscribe({ applicationServerKey: VAPID_PUBLIC_KEY })
-      ▼
-NeuraTask API (/api/push/subscribe)
-      │
-      │ 3. Upserts PushSubscription in Neon Postgres
-      ▼
-Cron / Notification Engine (lib/push.ts)
-      │
-      │ 4. Checks NotificationLog for 12h idempotency
-      │ 5. webpush.sendNotification(subscription, payload)
-      ▼
-Apple / Google / Mozilla Push Service
-      │
-      ▼
-Device Service Worker (public/sw.js: 'push' event)
-      │
-      │ 6. showNotification(title, { body, icon, badge, data, actions })
-      ▼
-User taps notification / action button
-      │
-      │ 7. 'notificationclick' event focuses tab or opens target task URL
-```
+* **`NetworkOnly`**: All `/api/*` routes (NextAuth sessions, AI task agents, mutations) bypass SW cache completely.
+* **`StaleWhileRevalidate`**: Precached shell icons, monochrome badge, offline page, and static assets (`/_next/static/*`).
+* **`NetworkFirst`**: Document navigations with a 3.5s timeout, falling back cleanly to `/offline`.
+* **iOS Push Compliance**: Unconditional fallback notification (`🔔 Task update`) guarantees iOS Safari compliance even when push payloads omit text.
+* **Badge**: Monochrome 96x96 glyph (`/icons/badge-96x96.png`) with purpose `monochrome` for Android status bar icons.
 
 ---
 
-## 2. Vercel Production Environment Variables
+## 3. Web Push Architecture & Notification Templates
 
-To enable Web Push on Vercel preview and production environments, configure these environment variables in your Vercel Dashboard (**Project Settings &rarr; Environment Variables**):
+### Notification Kinds & Invariants (`lib/notifications/templates.ts`)
+| Kind | Leading Emoji | Description | Privacy Generic Fallback |
+|---|---|---|---|
+| `DUE_TODAY` | `⏰` | Task due today (morning of) | `⏰ Task due today` |
+| `DUE_TOMORROW` | `📅` | Task due tomorrow (day before) | `📅 Task due tomorrow` |
+| `OVERDUE` | `⚠️` | Task is past deadline | `⚠️ Task overdue` |
+| `DIGEST` | `📋` | Morning summary (&ge; 3 tasks) | `📋 Daily task summary` |
+| `TEST` | `🔔` | Device test notification | `🔔 Test notification` |
 
-| Variable Name | Environment | Value Description |
+* **Title Grapheme Limit**: &le; 40 visual graphemes (measured via `Intl.Segmenter` to prevent truncation corruption with multi-byte emojis or RTL text).
+* **Body Character Limit**: &le; 110 characters, truncated at word boundaries with `...`.
+* **Sanitization**: Strips all user Markdown (`*`, `_`, `#`, `~`, `\``, `[ ]`) and user emojis from titles.
+* **Idempotency**: 12-hour deduping via `NotificationLog`.
+* **Nagging Limit**: Overdue tasks notify at most once every 12 hours, capped at 3 days (72 hours) maximum.
+
+---
+
+## 4. Vercel Environment Variables
+
+Configure these variables in your Vercel Project (**Settings &rarr; Environment Variables**):
+
+| Variable Name | Environment | Description |
 |---|---|---|
 | `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Production & Preview | `BBdsQRyhLf3YyGgZFs5VewfqbW9zcU60i6VFiinw3bNBquEr1eUV7_WgukFma8HZFiPFZB71f3K6VKixe-95Rtw` |
 | `VAPID_PRIVATE_KEY` | Production & Preview | `fLRfo1nYUXy8FxVp85aMz5puH5YVV29rkWtEJksyF6o` |
 | `VAPID_SUBJECT` | Production & Preview | `mailto:support@neuratask.app` |
+| `CRON_SECRET` | Production & Preview | Bearer token for triggering `/api/daily-task-notifications` |
 
 ---
 
-## 3. Cross-Device Verification Checklist
+## 5. Cross-Device Verification Checklist
 
-### A. Android & Chrome / Edge
-1. Navigate to the NeuraTask web app in Chrome or Edge.
-2. Verify the custom install banner appears after 3 seconds, or click the browser install icon in the address bar.
-3. Click **Install**.
-4. Launch NeuraTask from the app drawer / home screen.
-5. Verify standalone display mode (no browser URL bar).
-6. Go to **Settings** and toggle **Push notifications (this device)** to **ON**.
-7. Tap **Send test** and verify the notification appears in the system tray.
-8. Tap the notification: verify it opens and focuses the app.
-9. Disconnect Wi-Fi and mobile data: verify the app loads cached assets and navigates to the custom `/offline` page.
+### A. Normal Browser Tab (All Platforms)
+1. Open `https://ai-task-manager-112.vercel.app` in a standard browser tab (Chrome, Safari, Edge, Firefox).
+2. **Verify**: Only the Notion-style Install Page is rendered.
+3. **Verify**: Open DevTools Network tab &rarr; zero requests to `/api/auth/session` or `/api/tasks`.
+4. Click footer links &rarr; `/privacy` and `/terms` open immediately without blocking.
 
-### B. iOS Safari (iOS 16.4+)
-> [!NOTE]
-> On iOS, Apple requires PWAs to be installed on the Home Screen before the Web Push API (`PushManager`) is enabled.
+### B. Android (Chrome / Edge)
+1. In Chrome, click **Install app** on the Install Page.
+2. Launch NeuraTask from the app drawer / home screen.
+3. Verify standalone window without URL bar. Sign in and use app.
+4. Go to **Settings** &rarr; toggle **Push notifications (this device)** to **ON**.
+5. Tap **Send test**: verify `🔔 Test notification` arrives in system tray with monochrome status badge.
+6. Toggle **Show task titles in notifications** to **OFF**: verify subsequent notifications show generic text.
 
-1. Open NeuraTask in Mobile Safari.
-2. Tap the Safari **Share** button in the bottom navigation bar.
-3. Scroll down and tap **Add to Home Screen**.
-4. Confirm the app icon and name ("NeuraTask") and tap **Add**.
-5. Launch NeuraTask directly from your Home Screen.
-6. Verify full-screen standalone mode with safe-area spacing above the home indicator.
-7. Navigate to **Settings** and switch **Push notifications (this device)** to **ON**.
-8. Grant notification permission when prompted by iOS.
-9. Tap **Send test** and verify the push notification appears on the lock screen / Notification Center.
+### C. iOS Safari (iOS 16.4+)
+1. Open in Safari &rarr; Install Page instructs: tap **Share** &rarr; **Add to Home Screen**.
+2. Launch NeuraTask from the Home Screen.
+3. Verify full-screen standalone mode with safe-area spacing above the home bar.
+4. Go to **Settings** &rarr; turn on push notifications and grant iOS permissions.
+5. Tap **Send test**: verify notification arrives on lock screen / dynamic island.
 
-### C. Desktop (macOS / Windows / Linux)
-1. Open NeuraTask in Chrome, Edge, or Brave.
-2. Click the install icon in the URL bar to install as a desktop application.
-3. Verify window title bar, shortcuts ("Add Task", "Chat with Agent"), and responsive navigation.
+### D. Desktop (macOS Safari Sonoma 14+ / Windows Chrome & Edge)
+1. **macOS Safari**: Click **File** &rarr; **Add to Dock...**. Launch from Dock as standalone window.
+2. **Chrome / Edge**: Click the install icon in the URL bar. Launch as desktop window.
+3. Verify app shortcut: right-click app dock/taskbar icon &rarr; **Chat with agent**.
 
 ---
 
-## 4. Idempotent Cron Execution
-
-The cron endpoint at `/api/daily-task-notifications` handles both daily morning briefings and due-date push notifications:
+## 6. Running Automated Tests
 
 ```bash
-# Manual trigger test (replace with your CRON_SECRET)
-curl -X GET "https://ai-task-manager-112.vercel.app/api/daily-task-notifications" \
-     -H "Authorization: Bearer c665f0b6534a304a"
-```
+# Run all audit guardrails & tenant isolation tests
+npm run test
 
-**Guarantees**:
-* **12-Hour Idempotency**: `NotificationLog` records every successful dispatch for `(userId, taskId, type)`. Duplicate reminders within 12 hours are suppressed.
-* **Automatic Stale Device Pruning**: If a push service returns HTTP 404 or 410 (unsubscribed or uninstalled device), that subscription is automatically purged from the database.
+# Run Web Push infrastructure & VAPID tests
+npm run test:push
+
+# Run PWA Install Gate & platform detection tests
+npm run test:gate
+
+# Run notification template & grapheme invariant tests
+npm run test:templates
+```
