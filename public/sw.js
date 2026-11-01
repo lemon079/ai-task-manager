@@ -9,8 +9,9 @@ const PRECACHE_ASSETS = [
   "/favicon.ico",
   "/icons/icon-192x192.png",
   "/icons/icon-512x512.png",
+  "/icons/maskable-512x512.png",
   "/icons/apple-touch-icon.png",
-  "/icons/badge-72x72.png",
+  "/icons/badge-96x96.png",
   "/manifest.webmanifest",
 ];
 
@@ -151,53 +152,60 @@ self.addEventListener("message", (event) => {
   }
 });
 
-// 5. Web Push Notification Event Handler (Phase 3 Support)
+// 5. Web Push Notification Event Handler (Phase 1 & Part 5B Spec)
+// IMPORTANT (Safari/iOS): every push event MUST result in a visible notification.
+// If the handler returns without calling showNotification, iOS can revoke the subscription.
 self.addEventListener("push", (event) => {
-  if (!event.data) return;
+  let title = "🔔 Task update";
+  let options = {
+    body: "Open NeuraTask to see what's new.",
+    icon: "/icons/icon-192x192.png",
+    badge: "/icons/badge-96x96.png",
+    tag: "neuratask-notification",
+    renotify: false,
+    data: {
+      url: "/dashboard",
+    },
+  };
 
-  try {
-    const payload = event.data.json();
-    const title = payload.title || "NeuraTask Notification";
-    const options = {
-      body: payload.body || "You have an upcoming task deadline.",
-      icon: payload.icon || "/icons/icon-192x192.png",
-      badge: payload.badge || "/icons/badge-72x72.png",
-      tag: payload.tag || "neuratask-notification",
-      renotify: true,
-      data: {
-        url: payload.url || "/dashboard",
-        taskId: payload.taskId,
-      },
-      vibrate: [100, 50, 100],
-    };
+  if (event.data) {
+    try {
+      const payload = event.data.json();
+      if (payload.title) title = payload.title;
+      if (payload.body) options.body = payload.body;
+      if (payload.icon) options.icon = payload.icon;
+      if (payload.badge) options.badge = payload.badge;
+      if (payload.tag) options.tag = payload.tag;
+      if (typeof payload.renotify === "boolean") options.renotify = payload.renotify;
+      if (payload.data) {
+        options.data = payload.data;
+      } else if (payload.url || payload.taskId) {
+        options.data = {
+          url: payload.url || "/dashboard",
+          taskId: payload.taskId,
+        };
+      }
 
-    event.waitUntil(
-      self.registration.showNotification(title, options).then(() => {
-        if ("setAppBadge" in navigator && typeof payload.badgeCount === "number") {
-          navigator.setAppBadge(payload.badgeCount).catch(() => {});
-        }
-      })
-    );
-  } catch (err) {
-    const text = event.data.text();
-    event.waitUntil(
-      self.registration.showNotification("NeuraTask", {
-        body: text,
-        icon: "/icons/icon-192x192.png",
-        badge: "/icons/badge-72x72.png",
-      })
-    );
+      if (typeof payload.badgeCount === "number" && "setAppBadge" in navigator) {
+        navigator.setAppBadge(payload.badgeCount).catch(() => {});
+      }
+    } catch {
+      try {
+        const text = event.data.text();
+        if (text) options.body = text;
+      } catch {
+        // Fallback remains in place
+      }
+    }
   }
+
+  // Unconditional showNotification guarantees iOS never revokes subscription
+  event.waitUntil(self.registration.showNotification(title, options));
 });
 
 // 6. Notification Click Handler
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-
-  // If user tapped "Dismiss", do nothing
-  if (event.action === "dismiss") {
-    return;
-  }
 
   const targetUrl = event.notification.data?.url || "/dashboard";
 

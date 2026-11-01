@@ -36,18 +36,17 @@ export default function manifest(): MetadataRoute.Manifest {
         sizes: "180x180",
         type: "image/png",
       },
+      {
+        src: "/icons/badge-96x96.png",
+        sizes: "96x96",
+        type: "image/png",
+        purpose: "monochrome",
+      },
     ],
     shortcuts: [
       {
-        name: "Add Task",
-        short_name: "Add Task",
-        description: "Quickly create a new task in NeuraTask",
-        url: "/task-ai?action=new-task&source=pwa_shortcut",
-        icons: [{ src: "/icons/icon-192x192.png", sizes: "192x192" }],
-      },
-      {
-        name: "Chat with Agent",
-        short_name: "AI Agent",
+        name: "Chat with agent",
+        short_name: "Chat",
         description: "Chat with the NeuraTask AI assistant",
         url: "/task-ai?source=pwa_shortcut",
         icons: [{ src: "/icons/icon-192x192.png", sizes: "192x192" }],
