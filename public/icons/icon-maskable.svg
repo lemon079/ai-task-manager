@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGradMask" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0e0e12" />
+      <stop offset="100%" stop-color="#09090b" />
+    </linearGradient>
+    <linearGradient id="primaryGradMask" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#707ee6" />
+      <stop offset="100%" stop-color="#5e6ad2" />
+    </linearGradient>
+    <linearGradient id="sparkleGradMask" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#c7d2fe" />
+    </linearGradient>
+  </defs>
+
+  <!-- Full Bleed Background Canvas for Maskable (No border radius) -->
+  <rect width="512" height="512" fill="url(#bgGradMask)" />
+
+  <!-- Inner Safe Zone Content (Scaled to 80% of canvas) -->
+  <g transform="translate(51.2, 51.2) scale(0.8)">
+    <!-- Outer Rounded Frame -->
+    <rect x="96" y="96" width="320" height="320" rx="72" fill="none" stroke="#27272a" stroke-width="8" />
+
+    <!-- AI Sparkle -->
+    <path d="M 336 150 C 336 168 348 180 366 180 C 348 180 336 192 336 210 C 336 192 324 180 306 180 C 324 180 336 168 336 150 Z" fill="url(#sparkleGradMask)" />
+
+    <!-- Sleek Modern Checkmark -->
+    <path d="M 170 265 L 230 325 L 342 205" fill="none" stroke="url(#primaryGradMask)" stroke-width="40" stroke-linecap="round" stroke-linejoin="round" />
+
+    <!-- Accent Neural Nodes -->
+    <circle cx="170" cy="265" r="9" fill="#ffffff" />
+    <circle cx="230" cy="325" r="9" fill="#ffffff" />
+    <circle cx="342" cy="205" r="10" fill="#ffffff" />
+  </g>
+</svg>

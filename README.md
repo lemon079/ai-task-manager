@@ -31,20 +31,11 @@ Users can interact with a **custom-built AI Task Manager Agent** that performs C
   - Displays **title**, **status**, **priority**, and **due date**.
   - Intelligent color coding for quick visual scanning.
 
-### ⚙️ User Settings
-- Manage personal configurations:
-  - Time zone preference.
-  - Toggle **email notifications**.
-  - Define **daily reminder time**.
-- Receives **automated email digests** containing:
-  - AI-generated summaries.
-  - Upcoming deadlines.
-  - Personalized productivity tips.
-
-### 📬 Email & Insights
-- Daily summaries sent via **Nodemailer**.
-- **LangChain models** generate productivity insights based on your task patterns.
-- Offers actionable intelligence for improving focus and task management.
+### 📱 Install-Only PWA & Web Push
+- **Install-Only Architecture**: Operates exclusively as an installed application (Chrome/Edge desktop, macOS Safari Add to Dock, Android & iOS Home Screen). Browser tabs show a Notion-style install page without exposing internal UI or session data.
+- **Web Push Reminders**: Zero-email reminder system. Dispatches deadline warnings (day before and morning of) and overdue reminders.
+- **Part 5B Notification Contract**: Strict leading emojis (`⏰`, `📅`, `⚠️`, `📋`, `🔔`), &le; 40 grapheme titles, &le; 110 char bodies, and user privacy toggle.
+- **Offline Resilient**: Precached offline fallback and background sync via custom Service Worker.
 
 ---
 

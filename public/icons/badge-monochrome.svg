@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96">
+  <!-- Android Status Bar Monochrome Badge: Pure white glyph on transparent background -->
+  <!-- Checkmark -->
+  <path d="M 26 50 L 40 64 L 70 32" fill="none" stroke="#ffffff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+  <!-- AI Sparkle in top-right -->
+  <path d="M 68 18 C 68 22 71 25 75 25 C 71 25 68 28 68 32 C 68 28 65 25 61 25 C 65 25 68 22 68 18 Z" fill="#ffffff" />
+</svg>

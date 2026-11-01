@@ -1,5 +1,6 @@
 import Sidebar from "@/components/shared/Sidebar";
 import DashboardHeader from "@/components/shared/DashboardHeader";
+import MobileBottomNav from "@/components/shared/MobileBottomNav";
 import { cn } from "@/lib/utils";
 import { Toaster } from "sonner";
 import { ModalProvider } from "../context/ModalContext";
@@ -25,7 +26,7 @@ export const metadata = {
 
 export default function RootDashboardLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen flex bg-background">
+    <div className="min-h-[100dvh] flex bg-background">
       {/* Desktop Persistent Sidebar */}
       <div className="hidden md:flex flex-shrink-0">
         <Sidebar />
@@ -35,11 +36,13 @@ export default function RootDashboardLayout({ children }: { children: React.Reac
       <div className="flex-1 flex flex-col min-w-0">
         <ModalProvider>
           <DashboardHeader />
-          <main className={cn("flex-1 w-full overflow-y-auto")}>
+          <main className={cn("flex-1 w-full overflow-y-auto pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] md:pb-6")}>
             <div className="max-w-6xl mx-auto p-4 sm:p-6">
               {children}
             </div>
           </main>
+          {/* Mobile Bottom Navigation Bar */}
+          <MobileBottomNav />
         </ModalProvider>
       </div>
 

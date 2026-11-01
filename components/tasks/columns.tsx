@@ -73,12 +73,14 @@ function StatusCheckbox({ task }: { task: Task }) {
   };
 
   return (
-    <Checkbox
-      checked={isCompleted}
-      onCheckedChange={handleToggle}
-      className="size-4 rounded border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary transition-colors cursor-pointer"
-      aria-label="Mark as complete"
-    />
+    <div className="flex items-center justify-center min-h-[44px] min-w-[44px] -m-2 p-2">
+      <Checkbox
+        checked={isCompleted}
+        onCheckedChange={handleToggle}
+        className="size-4 rounded border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary transition-colors cursor-pointer"
+        aria-label="Mark as complete"
+      />
+    </div>
   );
 }
 
@@ -122,15 +124,16 @@ function TaskActions({ task }: { task: Task }) {
   };
 
   return (
-    <div className="flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+    <div className="flex justify-end opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
             size="icon"
-            className="size-7 rounded-md text-muted-foreground hover:text-foreground cursor-pointer"
+            className="size-9 md:size-7 rounded-md text-muted-foreground hover:text-foreground cursor-pointer"
+            aria-label="Task options"
           >
-            <MoreHorizontal className="size-3.5" />
+            <MoreHorizontal className="size-4 md:size-3.5" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-36 rounded-md p-1 shadow-sm border-border text-xs">
