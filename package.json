@@ -9,6 +9,7 @@
     "lint": "eslint",
     "test": "ts-node -O \"{\\\"module\\\":\\\"commonjs\\\"}\" tests/audit-verification.test.ts",
     "test:push": "ts-node -O \"{\\\"module\\\":\\\"commonjs\\\"}\" tests/push-notifications.test.ts",
+    "test:gate": "tsx tests/install-gate.test.ts",
     "test:eval": "tsx tests/agent-eval.test.ts",
     "test:eval:batched": "tsx tests/agent-eval-batched.test.ts",
     "test:e2e": "tsx tests/test-dev-ui.ts",

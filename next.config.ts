@@ -1,5 +1,15 @@
 import type { NextConfig } from "next";
 
+// Enforce install-only security: production builds must fail if the browser bypass escape hatch is set
+if (
+  process.env.NODE_ENV === "production" &&
+  process.env.NEXT_PUBLIC_ALLOW_BROWSER === "true"
+) {
+  throw new Error(
+    "Security Violation: NEXT_PUBLIC_ALLOW_BROWSER cannot be set to true in a production build. NeuraTask is an install-only PWA."
+  );
+}
+
 const nextConfig: NextConfig = {
   async headers() {
     return [
