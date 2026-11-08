@@ -1,6 +1,7 @@
 import { DateTime } from "luxon";
 import { NextResponse } from "next/server";
 import { dispatchDuePushNotifications } from "@/lib/push";
+import { getCronSecret } from "@/lib/api-keys";
 
 /**
  * NeuraTask Push-Only Notification Cron Endpoint
@@ -13,8 +14,8 @@ export async function GET(req: Request) {
   try {
     // Secure cron endpoint with CRON_SECRET
     const authHeader = req.headers.get("authorization");
-    const cronSecret = process.env.CRON_SECRET;
-    if (cronSecret && cronSecret !== "PLACEHOLDER_CRON_SECRET") {
+    const cronSecret = getCronSecret();
+    if (cronSecret) {
       const token = authHeader?.replace(/^Bearer\s+/i, "");
       if (token !== cronSecret) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

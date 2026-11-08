@@ -1,12 +1,13 @@
 import { Pinecone } from "@pinecone-database/pinecone";
 import { OllamaEmbeddings } from "@langchain/ollama";
+import { getPineconeApiKey, resolveApiKey } from "@/lib/api-keys";
 
 export const pinecone = new Pinecone({
-  apiKey: process.env.PINECONE_API_KEY!,
+  apiKey: getPineconeApiKey() || "",
 });
 
 export const task_embeddings_index = pinecone.index(
-  process.env.PINECONE_INDEX_NAME || "task-embeddings"
+  resolveApiKey(["PINECONE_INDEX_NAME"], "task-embeddings")!
 );
 
 export const embeddings = new OllamaEmbeddings({

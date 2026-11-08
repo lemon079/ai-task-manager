@@ -1,6 +1,16 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/prisma/prisma";
+import { getVapidPublicKey } from "@/lib/api-keys";
+
+export async function GET() {
+  const publicKey = getVapidPublicKey() || null;
+
+  return NextResponse.json(
+    { vapidPublicKey: publicKey },
+    { status: 200 }
+  );
+}
 
 export async function POST(req: Request) {
   try {

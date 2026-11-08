@@ -3,13 +3,11 @@
 import { useState, useMemo, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useSettings, Settings } from "@/hooks/useSettings";
 import { toast } from "sonner";
 import CustomLoader from "@/components/shared/CustomLoader";
 import { DateTime } from "luxon";
-import { useTheme } from "next-themes";
 import PushNotificationToggle from "@/components/settings/PushNotificationToggle";
 import { Bell, X } from "lucide-react";
 
@@ -22,20 +20,15 @@ function SettingsForm({
   saveSettings: any;
   isPending: boolean;
 }) {
-  const { theme, setTheme } = useTheme();
-  const isDark = theme === "dark";
-
   const defaultZone = useMemo(
     () => initialSettings.timeZone || DateTime.local().zoneName || "UTC",
     [initialSettings.timeZone]
   );
-  const defaultTime = initialSettings.notificationTime || "09:00";
   const defaultEnabled = initialSettings.notificationsEnabled ?? true;
   const defaultShowTitles = initialSettings.showTaskTitles ?? true;
 
   const [notificationsEnabled, setNotificationsEnabled] = useState(defaultEnabled);
-  const [notificationTime, setNotificationTime] = useState(defaultTime);
-  const [timeZone, setTimeZone] = useState(defaultZone);
+  const [timeZone] = useState(defaultZone);
   const [showTaskTitles, setShowTaskTitles] = useState(defaultShowTitles);
 
   const [emailNoticeDismissed, setEmailNoticeDismissed] = useState(true);
@@ -56,18 +49,17 @@ function SettingsForm({
 
   const [savedSettings, setSavedSettings] = useState({
     notificationsEnabled: defaultEnabled,
-    notificationTime: defaultTime,
     timeZone: defaultZone,
     showTaskTitles: defaultShowTitles,
   });
 
   const handleSave = () => {
     saveSettings(
-      { notificationsEnabled, notificationTime, timeZone, showTaskTitles },
+      { notificationsEnabled, notificationTime: "09:00", timeZone, showTaskTitles },
       {
         onSuccess: () => {
           toast.success("Settings saved");
-          setSavedSettings({ notificationsEnabled, notificationTime, timeZone, showTaskTitles });
+          setSavedSettings({ notificationsEnabled, timeZone, showTaskTitles });
         },
         onError: () => {
           toast.error("Failed to save settings");
@@ -79,11 +71,9 @@ function SettingsForm({
   const isChanged = useMemo(() => {
     return (
       notificationsEnabled !== savedSettings.notificationsEnabled ||
-      notificationTime !== savedSettings.notificationTime ||
-      timeZone !== savedSettings.timeZone ||
       showTaskTitles !== savedSettings.showTaskTitles
     );
-  }, [notificationsEnabled, notificationTime, timeZone, showTaskTitles, savedSettings]);
+  }, [notificationsEnabled, showTaskTitles, savedSettings]);
 
   return (
     <div className="max-w-2xl mx-auto space-y-6 pb-12">
@@ -97,13 +87,13 @@ function SettingsForm({
         </p>
       </div>
 
-      {/* Dismissible Notice: Email replaced by Push */}
+      {/* Dismissible Notice */}
       {!emailNoticeDismissed && (
         <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-primary/10 border border-primary/20 text-xs text-foreground">
           <div className="flex items-center gap-2">
             <Bell className="size-4 text-primary shrink-0" />
             <span>
-              Email reminders have been replaced by Web Push notifications. Turn them on below to stay updated.
+              Reminders are delivered via Web Push notifications. Turn them on below to stay updated.
             </span>
           </div>
           <button
@@ -116,25 +106,8 @@ function SettingsForm({
         </div>
       )}
 
-      {/* Flat Notion-style settings list */}
+      {/* Settings list */}
       <div className="rounded-md border border-border bg-card divide-y divide-border/60">
-        {/* Row: Dark Mode */}
-        <div className="flex items-center justify-between p-3.5 sm:p-4">
-          <div className="space-y-0.5 pr-4">
-            <Label htmlFor="theme-toggle" className="text-xs font-medium text-foreground cursor-pointer">
-              Dark mode
-            </Label>
-            <p className="text-[11px] text-muted-foreground">
-              Toggle between light and dark appearance
-            </p>
-          </div>
-          <Switch
-            id="theme-toggle"
-            checked={isDark}
-            onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
-          />
-        </div>
-
         {/* Row: Web Push Notifications (PWA) */}
         <PushNotificationToggle />
 
@@ -145,7 +118,7 @@ function SettingsForm({
               Show task titles in notifications
             </Label>
             <p className="text-[11px] text-muted-foreground">
-              When turned off, notification messages show generic text without revealing sensitive task titles
+              When turned off, notifications show generic text without revealing sensitive task titles
             </p>
           </div>
           <Switch
@@ -172,24 +145,20 @@ function SettingsForm({
           />
         </div>
 
-        {/* Row: Notification Time */}
+        {/* Row: Digest Schedule Info */}
         {notificationsEnabled && (
           <div className="flex items-center justify-between p-3.5 sm:p-4">
             <div className="space-y-0.5 pr-4">
-              <Label htmlFor="time-input" className="text-xs font-medium text-foreground">
-                Digest time
-              </Label>
+              <span className="text-xs font-medium text-foreground block">
+                Digest schedule
+              </span>
               <p className="text-[11px] text-muted-foreground">
-                Local time when morning briefing is dispatched
+                Dispatched daily at 9:00 AM in your local timezone
               </p>
             </div>
-            <Input
-              id="time-input"
-              type="time"
-              value={notificationTime}
-              onChange={(e) => setNotificationTime(e.target.value)}
-              className="w-28 h-7 text-xs rounded-md border-border bg-background"
-            />
+            <span className="text-xs font-mono text-muted-foreground tabular-nums bg-muted px-2 py-0.5 rounded border border-border/60">
+              09:00 AM
+            </span>
           </div>
         )}
 

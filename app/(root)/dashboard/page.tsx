@@ -2,9 +2,7 @@ import { getTasks } from "@/lib/actions/task";
 import StatCard from "@/components/dashboard/StatCard";
 import { ScheduleCalendar } from "@/components/calender/Calendar";
 import TaskTable from "@/components/tasks/TaskTable";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Sparkles } from "lucide-react";
+import AddTaskModal from "@/components/tasks/AddTaskModal";
 
 export default async function DashboardPage() {
   const tasks = await getTasks();
@@ -29,15 +27,11 @@ export default async function DashboardPage() {
           </p>
         </div>
 
-        <Link href="/task-ai">
-          <Button
-            size="sm"
-            className="h-7 px-2.5 rounded-md text-xs font-medium gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
-          >
-            <Sparkles className="size-3" />
-            <span>New Task</span>
-          </Button>
-        </Link>
+        {/* Create Task Action - Opens dialog directly */}
+        <AddTaskModal
+          label="New Task"
+          className="h-7 px-2.5 rounded-md text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs"
+        />
       </div>
 
       {/* Four Quiet Stat Cards */}
@@ -121,7 +115,7 @@ export default async function DashboardPage() {
 
             {tasks.length === 0 && (
               <div className="py-8 text-center text-xs text-muted-foreground">
-                No tasks yet. Create one with AI to get started.
+                No tasks yet. Create one to get started.
               </div>
             )}
           </div>

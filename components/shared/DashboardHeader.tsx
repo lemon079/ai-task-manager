@@ -9,7 +9,6 @@ import {
   LayoutDashboard,
   CheckSquare,
   Settings,
-  Sparkles,
 } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import { Button } from "@/components/ui/button";
@@ -84,20 +83,8 @@ export default function DashboardHeader() {
           </nav>
         </div>
 
-        {/* Right: Quick Action & Theme Switcher */}
+        {/* Right: Theme Switcher for mobile */}
         <div className="flex items-center gap-2">
-          {pathname !== "/task-ai" && (
-            <Link href="/task-ai">
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-7 px-2.5 rounded-md text-xs font-normal gap-1.5 text-muted-foreground hover:text-foreground hover:bg-muted/50 border-border"
-              >
-                <Sparkles className="size-3 text-primary" />
-                <span className="hidden sm:inline">Ask AI</span>
-              </Button>
-            </Link>
-          )}
           <div className="md:hidden">
             <ThemeToggle />
           </div>

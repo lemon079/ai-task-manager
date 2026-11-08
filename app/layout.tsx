@@ -57,7 +57,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           disableTransitionOnChange
         >
           <InstallGate>{children}</InstallGate>
-          <Toaster />
+          <Toaster position="bottom-right" richColors />
         </ThemeProvider>
       </body>
     </html>

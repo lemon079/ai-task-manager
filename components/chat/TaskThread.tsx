@@ -149,15 +149,15 @@ export function TaskThread() {
         />
       </ThreadPrimitive.Viewport>
 
-      {/* Floating Scroll to Bottom Indicator */}
+      {/* Floating Scroll to Bottom Indicator - Centered and only visible when scrolled away from bottom */}
       <ThreadPrimitive.ScrollToBottom asChild>
         <Button
           size="icon"
           variant="outline"
-          className="absolute bottom-16 right-4 size-8 md:size-7 rounded-full shadow-sm z-10 bg-background text-muted-foreground hover:text-foreground"
+          className="absolute bottom-20 left-1/2 -translate-x-1/2 size-8 rounded-full shadow-md z-10 bg-background/95 backdrop-blur text-muted-foreground hover:text-foreground transition-all duration-200 disabled:hidden"
           title="Scroll to bottom"
         >
-          <ArrowDown className="size-3.5" />
+          <ArrowDown className="size-4" />
         </Button>
       </ThreadPrimitive.ScrollToBottom>
 

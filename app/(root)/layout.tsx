@@ -2,7 +2,6 @@ import Sidebar from "@/components/shared/Sidebar";
 import DashboardHeader from "@/components/shared/DashboardHeader";
 import MobileBottomNav from "@/components/shared/MobileBottomNav";
 import { cn } from "@/lib/utils";
-import { Toaster } from "sonner";
 import { ModalProvider } from "../context/ModalContext";
 
 export const metadata = {
@@ -45,8 +44,6 @@ export default function RootDashboardLayout({ children }: { children: React.Reac
           <MobileBottomNav />
         </ModalProvider>
       </div>
-
-      <Toaster duration={2500} position="bottom-right" richColors />
     </div>
   );
 }

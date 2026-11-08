@@ -7,7 +7,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Drawer,
@@ -15,33 +14,41 @@ import {
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
-  DrawerFooter,
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Plus, Calendar } from "lucide-react";
-import { useTaskAgent } from "@/hooks/useTaskAgent";
+import { createTask } from "@/lib/actions/task";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import useMedia from "use-media";
+import { useRouter } from "next/navigation";
 
 interface AddTaskModalProps {
   variant?: "default" | "outline" | "ghost";
   className?: string;
+  label?: string;
+  showIcon?: boolean;
 }
 
-export default function AddTaskModal({ variant = "default", className }: AddTaskModalProps) {
+export default function AddTaskModal({
+  variant = "default",
+  className,
+  label = "Add Task",
+  showIcon = true,
+}: AddTaskModalProps) {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
   const [dueDate, setDueDate] = useState("");
+  const [isPending, setIsPending] = useState(false);
 
   const isDesktop = useMedia({ minWidth: "768px" });
-  const { mutate: sendMessage, isPending } = useTaskAgent();
   const queryClient = useQueryClient();
+  const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!title.trim()) {
@@ -49,30 +56,36 @@ export default function AddTaskModal({ variant = "default", className }: AddTask
       return;
     }
 
-    const message = `Create a task: "${title}"${priority !== "medium" ? ` with ${priority} priority` : ""}${dueDate ? ` due on ${dueDate}` : ""}`;
+    setIsPending(true);
+    try {
+      await createTask({
+        title: title.trim(),
+        priority,
+        dueDate: dueDate || undefined,
+      });
 
-    sendMessage(
-      { input: message },
-      {
-        onSuccess: () => {
-          toast.success("Task created successfully");
-          setTitle("");
-          setPriority("medium");
-          setDueDate("");
-          setOpen(false);
-          queryClient.invalidateQueries({ queryKey: ["messages"] });
-          queryClient.invalidateQueries({ queryKey: ["tasks"] });
-          queryClient.invalidateQueries({ queryKey: ["calendar"] });
-        },
-      }
-    );
+      toast.success("Task created successfully");
+      setTitle("");
+      setPriority("medium");
+      setDueDate("");
+      setOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["calendar"] });
+      router.refresh();
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to create task");
+    } finally {
+      setIsPending(false);
+    }
   };
 
   const formContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid gap-4 py-2">
         <div className="grid gap-2">
-          <Label htmlFor="title" className="text-xs font-medium">Task Title</Label>
+          <Label htmlFor="title" className="text-xs font-medium">
+            Task Title
+          </Label>
           <Input
             id="title"
             placeholder="Enter task title..."
@@ -80,10 +93,13 @@ export default function AddTaskModal({ variant = "default", className }: AddTask
             onChange={(e) => setTitle(e.target.value)}
             disabled={isPending}
             className="text-base sm:text-sm"
+            autoFocus
           />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="priority" className="text-xs font-medium">Priority</Label>
+          <Label htmlFor="priority" className="text-xs font-medium">
+            Priority
+          </Label>
           <div className="flex gap-2">
             {(["low", "medium", "high"] as const).map((p) => (
               <Button
@@ -92,7 +108,9 @@ export default function AddTaskModal({ variant = "default", className }: AddTask
                 variant={priority === p ? "default" : "outline"}
                 size="sm"
                 onClick={() => setPriority(p)}
-                className={`flex-1 sm:flex-initial min-h-[36px] ${priority === p ? "" : "text-muted-foreground"}`}
+                className={`flex-1 sm:flex-initial min-h-[36px] ${
+                  priority === p ? "" : "text-muted-foreground"
+                }`}
               >
                 {p.charAt(0).toUpperCase() + p.slice(1)}
               </Button>
@@ -100,7 +118,9 @@ export default function AddTaskModal({ variant = "default", className }: AddTask
           </div>
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="dueDate" className="text-xs font-medium">Due Date (Optional)</Label>
+          <Label htmlFor="dueDate" className="text-xs font-medium">
+            Due Date (Optional)
+          </Label>
           <div className="relative">
             <Input
               id="dueDate"
@@ -136,9 +156,9 @@ export default function AddTaskModal({ variant = "default", className }: AddTask
   );
 
   const triggerButton = (
-    <Button variant={variant} className={`min-h-[40px] sm:min-h-[36px] ${className || ""}`}>
-      <Plus className="size-4 mr-2" />
-      Add Task
+    <Button variant={variant} className={`cursor-pointer ${className || ""}`}>
+      {showIcon && <Plus className="size-3.5 mr-1.5" />}
+      {label && <span>{label}</span>}
     </Button>
   );
 
