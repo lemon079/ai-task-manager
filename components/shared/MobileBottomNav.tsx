@@ -55,6 +55,7 @@ export default function MobileBottomNav() {
         <div className="flex items-center justify-center px-1">
           <AddTaskModal
             variant="default"
+            label=""
             className="size-10 rounded-full p-0 flex items-center justify-center shadow-md bg-primary text-primary-foreground hover:bg-primary/90 active:scale-95 transition-transform [&_svg]:mr-0"
           />
         </div>

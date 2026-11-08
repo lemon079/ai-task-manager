@@ -3,20 +3,24 @@ import Google from "next-auth/providers/google";
 import Credentials from "next-auth/providers/credentials";
 import { prisma } from "./prisma/prisma";
 import bcrypt from "bcrypt";
+import { getAuthSecret, resolveApiKey } from "@/lib/api-keys";
+
+const googleClientId = resolveApiKey(["GOOGLE_CLIENT_ID"]);
+const googleClientSecret = resolveApiKey(["GOOGLE_CLIENT_SECRET"]);
 
 /**
  * NextAuth v5 (Auth.js) Configuration
  * @see https://authjs.dev/getting-started/migrating-to-v5
  */
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+  secret: getAuthSecret(),
   trustHost: true,
   providers: [
-    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+    ...(googleClientId && googleClientSecret
       ? [
           Google({
-            clientId: process.env.GOOGLE_CLIENT_ID,
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+            clientId: googleClientId,
+            clientSecret: googleClientSecret,
           }),
         ]
       : []),
@@ -99,4 +103,3 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   session: { strategy: "jwt" },
 });
-

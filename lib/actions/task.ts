@@ -16,6 +16,7 @@ import {
   deleteTaskEmbedding,
   updateTaskEmbedding,
 } from "../langchain/embeddings/crud";
+import { hasGeminiApiKey } from "@/lib/api-keys";
 
 // -------------------- FETCH TASKS --------------------
 async function getTasks() {
@@ -238,10 +239,7 @@ async function summarizeTasks(tasks: Task[]) {
   if (!tasks?.length) return "No tasks available for summary.";
 
   try {
-    const hasGoogleKey =
-      process.env.GOOGLE_API_KEY &&
-      !process.env.GOOGLE_API_KEY.includes("PLACEHOLDER");
-    const model = hasGoogleKey ? gemini : gpt;
+    const model = hasGeminiApiKey() ? gemini : gpt;
 
     const pipeline = summarizeTaskPrompt.pipe(model);
     const res = await pipeline.invoke({ tasks });

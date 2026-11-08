@@ -32,14 +32,43 @@ export async function getPushSubscription(): Promise<PushSubscription | null> {
   }
 }
 
+/**
+ * Resolves the VAPID public key.
+ * Tries build-time NEXT_PUBLIC_VAPID_PUBLIC_KEY first,
+ * then falls back to fetching dynamically from the server route.
+ */
+export async function getVapidPublicKey(): Promise<string | null> {
+  if (process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY) {
+    return process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  }
+
+  try {
+    const res = await fetch("/api/push/subscribe");
+    if (res.ok) {
+      const data = await res.json();
+      if (data?.vapidPublicKey) {
+        return data.vapidPublicKey;
+      }
+    }
+  } catch (err) {
+    console.warn("[Push] Failed to fetch server VAPID key:", err);
+  }
+
+  return null;
+}
+
 export async function subscribeToPush(): Promise<{ success: boolean; error?: string }> {
   if (!isPushSupported()) {
     return { success: false, error: "Web push is not supported in this browser." };
   }
 
-  const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  const vapidPublicKey = await getVapidPublicKey();
   if (!vapidPublicKey) {
-    return { success: false, error: "Push notification VAPID key is missing on client." };
+    return {
+      success: false,
+      error:
+        "Push notification VAPID public key is not configured. Please add NEXT_PUBLIC_VAPID_PUBLIC_KEY in your deployment environment variables.",
+    };
   }
 
   try {

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { LayoutDashboard, CheckSquare, Settings, LogOut } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
@@ -44,8 +45,14 @@ export default function Sidebar({ onLinkClick }: { onLinkClick?: () => void }) {
           className="flex items-center gap-2 group"
           onClick={onLinkClick}
         >
-          <div className="size-5 rounded bg-primary/10 text-primary flex items-center justify-center font-bold text-[11px]">
-            N
+          <div className="size-6 rounded-md overflow-hidden bg-black flex items-center justify-center shrink-0">
+            <Image
+              src="/icons/icon-192x192.png"
+              alt="NeuraTask logo"
+              width={24}
+              height={24}
+              className="size-6 object-cover"
+            />
           </div>
           <span className="text-[13px] font-semibold tracking-tight text-foreground">
             NeuraTask

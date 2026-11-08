@@ -7,19 +7,21 @@ import { getTaskAgentForUser } from "@/lib/langchain/memory/task";
 import { getRecentlyTouchedTasksContext, PrismaChatMessageHistory } from "@/lib/langchain/memory/prisma-chat-message";
 import { classifyError } from "@/lib/langchain/resilience/error-classifier";
 import { circuitBreaker } from "@/lib/langchain/resilience/circuit-breaker";
+import { hasGeminiApiKey } from "@/lib/api-keys";
 import { DateTime } from "luxon";
 import { z } from "zod";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
 
-const RequestSchema = z.object({
-  content: z
-    .string()
-    .trim()
-    .min(1, "Message cannot be empty")
-    .max(1000, "Message cannot exceed 1000 characters"),
-});
+const RequestSchema = z
+  .object({
+    content: z.string().trim().min(1).max(1000).optional(),
+    input: z.string().trim().min(1).max(1000).optional(),
+  })
+  .refine((d) => Boolean(d.content || d.input), {
+    message: "Message cannot be empty",
+  });
 
 export async function POST(req: NextRequest) {
   try {
@@ -31,7 +33,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // 2. Origin / CSRF Verification
+    // 2. Validate API Key Availability
+    if (!hasGeminiApiKey()) {
+      return NextResponse.json(
+        { error: "AI Assistant is not configured: GOOGLE_API_KEY is missing from environment variables." },
+        { status: 503 }
+      );
+    }
+
+    // 3. Origin / CSRF Verification
     const origin = req.headers.get("origin");
     const host = req.headers.get("host");
     if (origin && host) {
@@ -41,7 +51,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 3. Rate Limit & Daily Budget Checks
+    // 4. Rate Limit & Daily Budget Checks
     const rateLimitResult = checkRateLimit(`agent:${userId}`, RATE_LIMITS.AGENT);
     if (!rateLimitResult.success) {
       return NextResponse.json(
@@ -64,7 +74,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 4. Validate Request Body with Zod
+    // 5. Validate Request Body with Zod (accepts either { content } or { input })
     const body = await req.json().catch(() => ({}));
     const parseResult = RequestSchema.safeParse(body);
     if (!parseResult.success) {
@@ -74,15 +84,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { content } = parseResult.data;
+    const rawContent = (parseResult.data.content || parseResult.data.input)!;
 
-    // 5. Apply Input Guardrails (Pre-filter)
-    const inputCheck = applyInputGuardrails(content);
+    // 6. Apply Input Guardrails (Pre-filter)
+    const inputCheck = applyInputGuardrails(rawContent);
     if (!inputCheck.passed) {
       return NextResponse.json({ error: inputCheck.message }, { status: 400 });
     }
 
-    // 6. Resolve User's Timezone & Dynamic Date Context
+    // 7. Resolve User's Timezone & Dynamic Date Context
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { timeZone: true },
@@ -93,10 +103,10 @@ export async function POST(req: NextRequest) {
     const currentDate = nowInTz.toFormat("yyyy-MM-dd");
     const currentWeekday = nowInTz.toFormat("cccc");
 
-    // 7. Fetch Recently Touched Tasks for Contextual Memory
+    // 8. Fetch Recently Touched Tasks for Contextual Memory
     const recentTasks = await getRecentlyTouchedTasksContext(userId);
 
-    // 8. Prepare Isolated User Agent & History
+    // 9. Prepare Isolated User Agent & History
     const userAgent = await getTaskAgentForUser(userId);
     const sessionId = `chat-${userId}`;
     const history = new PrismaChatMessageHistory(sessionId, userId);
@@ -141,7 +151,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 9. True Real-Time Streaming via Server-Sent Events (SSE)
+    // 10. True Real-Time Streaming via Server-Sent Events (SSE)
     const stream = new ReadableStream({
       async start(controller) {
         const encoder = new TextEncoder();
@@ -232,6 +242,8 @@ export async function POST(req: NextRequest) {
               userSafeMessage = "The AI assistant is temporarily operating at capacity (daily token quota reached). Your tasks are safe and accessible in the task table below. You can continue managing your tasks manually or try again once tokens refresh.";
             } else if (classified.category === "TRANSIENT") {
               userSafeMessage = "Temporary connectivity issue with the AI service. Please retry in a moment.";
+            } else if (classified.category === "FATAL") {
+              userSafeMessage = `AI Service Configuration Error: ${classified.message}`;
             }
 
             sendEvent({
