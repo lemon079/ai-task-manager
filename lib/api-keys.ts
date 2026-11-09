@@ -4,7 +4,7 @@
  * Centralizes resolution of environment variables across the application, providing:
  * - Multi-alias resolution (e.g., GOOGLE_API_KEY vs GEMINI_API_KEY)
  * - Placeholder detection (e.g., "your-key-here", "PLACEHOLDER")
- * - Safe fallback defaults
+ * - Safe fallback defaults for public non-sensitive settings
  * - Single reusable source of truth across client and server
  */
 
@@ -97,9 +97,7 @@ export function getVapidPrivateKey(): string | undefined {
  * Resolves the Web Push VAPID subject contact.
  */
 export function getVapidSubject(): string {
-  return (
-    resolveApiKey(["VAPID_SUBJECT"]) || "mailto:support@neuratask.app"
-  );
+  return resolveApiKey(["VAPID_SUBJECT"]) || "mailto:support@neuratask.app";
 }
 
 /**

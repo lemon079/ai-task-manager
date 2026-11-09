@@ -66,8 +66,8 @@ Configure these variables in your Vercel Project (**Settings &rarr; Environment 
 
 | Variable Name | Environment | Description |
 |---|---|---|
-| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Production & Preview | `BBdsQRyhLf3YyGgZFs5VewfqbW9zcU60i6VFiinw3bNBquEr1eUV7_WgukFma8HZFiPFZB71f3K6VKixe-95Rtw` |
-| `VAPID_PRIVATE_KEY` | Production & Preview | `fLRfo1nYUXy8FxVp85aMz5puH5YVV29rkWtEJksyF6o` |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Production & Preview | Generated VAPID public key (base64 URL-safe) |
+| `VAPID_PRIVATE_KEY` | Production & Preview | Generated VAPID private key (secret) |
 | `VAPID_SUBJECT` | Production & Preview | `mailto:support@neuratask.app` |
 | `CRON_SECRET` | Production & Preview | Bearer token for triggering `/api/daily-task-notifications` |
 
