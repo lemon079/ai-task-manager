@@ -12,11 +12,17 @@ import { getCronSecret } from "@/lib/api-keys";
  */
 export async function GET(req: Request) {
   try {
-    // Secure cron endpoint with CRON_SECRET
+    const { searchParams } = new URL(req.url);
     const authHeader = req.headers.get("authorization");
     const cronSecret = getCronSecret();
+
+    // Secure cron endpoint with CRON_SECRET (accepts Authorization Bearer or ?key= / ?secret=)
     if (cronSecret) {
-      const token = authHeader?.replace(/^Bearer\s+/i, "");
+      const token =
+        authHeader?.replace(/^Bearer\s+/i, "") ||
+        searchParams.get("key") ||
+        searchParams.get("secret");
+
       if (token !== cronSecret) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
