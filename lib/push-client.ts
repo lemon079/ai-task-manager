@@ -81,6 +81,12 @@ export async function subscribeToPush(): Promise<{ success: boolean; error?: str
     // 2. Ensure Service Worker is registered and active
     const registration = await navigator.serviceWorker.ready;
 
+    // Clean up any stale subscription (e.g. from prior key rotation)
+    const existingSubscription = await registration.pushManager.getSubscription();
+    if (existingSubscription) {
+      await existingSubscription.unsubscribe().catch(() => {});
+    }
+
     // 3. Subscribe with VAPID applicationServerKey
     const convertedVapidKey = urlBase64ToUint8Array(vapidPublicKey);
     const subscription = await registration.pushManager.subscribe({

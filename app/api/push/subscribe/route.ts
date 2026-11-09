@@ -48,6 +48,14 @@ export async function POST(req: Request) {
       },
     });
 
+    // Ensure user preference reflects enabled notifications
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: { notificationsEnabled: true },
+    }).catch((err) => {
+      console.warn("[Push Subscribe] Failed to update user notificationsEnabled:", err);
+    });
+
     return NextResponse.json(
       { success: true, id: subscription.id, message: "Push subscription registered" },
       { status: 200 }
