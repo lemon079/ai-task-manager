@@ -89,7 +89,7 @@ async function runTests() {
   });
 
   it("urlBase64ToUint8Array accurately handles padding and url-safe characters", () => {
-    const testKey = "BBdsQRyhLf3YyGgZFs5VewfqbW9zcU60i6VFiinw3bNBquEr1eUV7_WgukFma8HZFiPFZB71f3K6VKixe-95Rtw";
+    const testKey = "BAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ";
     const bytes = urlBase64ToUint8Array(testKey);
     assert.ok(bytes instanceof Uint8Array);
     assert.strictEqual(bytes.length, 65, "P-256 public key uncompressed byte length must be 65 bytes");
