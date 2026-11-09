@@ -2,9 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Bell, BellOff, Send, Loader2, AlertCircle } from "lucide-react";
+import { Bell, BellOff, Loader2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import {
   isPushSupported,
@@ -18,7 +17,6 @@ export default function PushNotificationToggle() {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [permission, setPermission] = useState<NotificationPermission>("default");
   const [loading, setLoading] = useState(false);
-  const [testing, setTesting] = useState(false);
   const [isIosBrowser, setIsIosBrowser] = useState(false);
 
   useEffect(() => {
@@ -75,24 +73,6 @@ export default function PushNotificationToggle() {
       }
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleSendTest = async () => {
-    setTesting(true);
-    try {
-      const res = await fetch("/api/push/test", { method: "POST" });
-      const data = await res.json();
-
-      if (res.ok && data.success) {
-        toast.success("Test notification sent! Check your device notifications.");
-      } else {
-        toast.error(data.message || data.error || "Failed to send test notification.");
-      }
-    } catch {
-      toast.error("Network error while sending test notification.");
-    } finally {
-      setTesting(false);
     }
   };
 
@@ -168,30 +148,6 @@ export default function PushNotificationToggle() {
       {permission === "denied" && (
         <div className="p-2 rounded-md bg-destructive/10 border border-destructive/20 text-[11px] text-destructive">
           Notifications are blocked in your browser settings. To enable them, click the lock icon in your browser address bar and allow Notifications.
-        </div>
-      )}
-
-      {isSubscribed && (
-        <div className="flex items-center justify-between pt-1 border-t border-border/40">
-          <span className="text-[11px] text-muted-foreground flex items-center gap-1.5">
-            <span className="size-1.5 rounded-full bg-emerald-500" />
-            Device registered for Web Push
-          </span>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={handleSendTest}
-            disabled={testing}
-            className="h-7 px-2.5 text-xs gap-1.5 text-muted-foreground hover:text-foreground"
-          >
-            {testing ? (
-              <Loader2 className="size-3 animate-spin" />
-            ) : (
-              <Send className="size-3" />
-            )}
-            <span>Send test</span>
-          </Button>
         </div>
       )}
     </div>
